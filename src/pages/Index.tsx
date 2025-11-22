@@ -72,7 +72,7 @@ const Index = () => {
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div className="transition-all duration-500 delay-100">
-              <div className="text-4xl font-bold text-primary mb-2">5000+</div>
+              <div className="text-4xl font-bold text-primary mb-2">10000+</div>
               <div className="text-sm text-muted-foreground">ECO Openings</div>
             </div>
             <div className="transition-all duration-500 delay-200">
@@ -146,7 +146,7 @@ const Index = () => {
               <div className="w-16 h-16 bg-green-500/10 rounded-xl flex items-center justify-center mb-6 text-green-500 group-hover:scale-110 transition-transform">
                 <BookMarked className="w-8 h-8" />
               </div>
-              <h3 className="text-2xl font-bold mb-4">5000+ Opening Library</h3>
+              <h3 className="text-2xl font-bold mb-4">10000+ Opening Library</h3>
               <p className="text-muted-foreground leading-relaxed mb-6">
                 Master every ECO opening with interactive lessons. Learn famous lines from Sicilian Dragon to King's Indian, with auto-move and side detection.
               </p>
