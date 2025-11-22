@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="45.2" height="45.2" viewBox="0 0 45.2 45.2">
+  <g transform="translate(0,0)">
+    <rect width="45.2" height="45.2" rx="6" fill="#0f172a" />
+    <g transform="translate(6,6) scale(0.6)">
+      <!-- simplified crown derived from provided SVG -->
+      <path d="M12 0 L16 8 L24 8 L18 12 L20 20 L12 15 L4 20 L6 12 L0 8 L8 8 Z" fill="#ffcc00"/>
+    </g>
+  </g>
+</svg>
