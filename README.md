@@ -5,9 +5,9 @@ It combines a beautiful modern UI with powerful engine-driven insights — perfe
 
 ---
 
-# ✨ Features
+# Features
 
-## 🎮 Play Mode
+## Play Mode
 - Play full classical chess against **Stockfish 17.1**.
 - Smooth piece animations and responsive board interactions.
 - Undo / Redo, board flip, hints, and keyboard shortcuts.
@@ -15,7 +15,7 @@ It combines a beautiful modern UI with powerful engine-driven insights — perfe
 
 ---
 
-## 🧠 Analysis Mode (Engine Powered)
+## Analysis Mode (Engine Powered)
 - Real-time analysis using **Stockfish 17.1 (WASM)**.
 - Eval bar, best move suggestions, and multi-line evaluation.
 - Automatic move classifications:
@@ -34,7 +34,7 @@ It combines a beautiful modern UI with powerful engine-driven insights — perfe
 
 ---
 
-## 📚 Openings Trainer (ALL Openings + Famous Lines)
+## Openings Trainer (ALL Openings + Famous Lines)
 - Complete openings explorer with structured lines and explanations.
 - Two training categories:
   - **Famous Openings**
@@ -47,7 +47,7 @@ It combines a beautiful modern UI with powerful engine-driven insights — perfe
 
 ---
 
-## 🧩 Puzzles Mode
+## Puzzles Mode
 - Multiple-move puzzles with visual cues.
 - **Three difficulties**:
   - Beginner
@@ -57,7 +57,7 @@ It combines a beautiful modern UI with powerful engine-driven insights — perfe
 
 ---
 
-## 🎨 Modern UI / UX
+## Modern UI / UX
 - Built with **shadcn-ui** and **Tailwind CSS**.
 - Dark, polished, professional styling.
 - Fully responsive for all screen sizes.
@@ -68,11 +68,11 @@ It combines a beautiful modern UI with powerful engine-driven insights — perfe
 # 🛠 Tech Stack
 
 ### Frontend
-- ⚡ **React + Vite**
-- 🟦 **TypeScript**
-- 🎨 **Tailwind CSS** + **shadcn-ui**
-- ♟️ **react-chessboard** (board display)
-- ♟️ **chess.js** (game logic)
+-  **React + Vite**
+-  **TypeScript**
+-  **Tailwind CSS** + **shadcn-ui**
+-  **react-chessboard** (board display)
+-  **chess.js** (game logic)
 
 ### Engine
 - 🔥 **Stockfish 17.1 (WebAssembly)**  
@@ -88,7 +88,7 @@ It combines a beautiful modern UI with powerful engine-driven insights — perfe
 
 ---
 
-# 🧩 Why This Project Is Impressive (For Recruiters)
+#  Why This Project Is Impressive (For Recruiters)
 
 ### ⭐ Advanced Concepts Implemented
 - Integrated in-browser Stockfish 17.1 engine.
@@ -118,6 +118,7 @@ It combines a beautiful modern UI with powerful engine-driven insights — perfe
 - Auto-play opening lines.
 - Error handling and engine fallback.
 
+STAY IN TOUCH WITH CHESSWITHMONK or Follow me on ig @cozy.monkk for more info I'll update you with my project
 ---
 
 # 📦 Getting Started
