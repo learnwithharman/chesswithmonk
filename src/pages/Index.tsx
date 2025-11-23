@@ -332,7 +332,7 @@ const Index = () => {
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
               <Linkedin className="w-5 h-5" />
             </a>
-            <a href="mailto:contact@chesswithmonk.com" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
+            <a href="mailto:v1ntage.monk69@gmail.com" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
               <Mail className="w-5 h-5" />
             </a>
           </div>
