@@ -86,12 +86,18 @@ export const Square = React.memo(function Square({
 
       {/* Coordinate labels */}
       {square[1] === '1' && (
-        <div className="absolute bottom-0.5 right-1 text-xs font-semibold opacity-60 pointer-events-none">
+        <div className={cn(
+          "absolute bottom-0.5 right-1 text-xs font-bold pointer-events-none",
+          isLight ? "text-[#B58863]" : "text-[#F0D9B5]"
+        )}>
           {square[0]}
         </div>
       )}
       {square[0] === 'a' && (
-        <div className="absolute top-0.5 left-1 text-xs font-semibold opacity-60 pointer-events-none">
+        <div className={cn(
+          "absolute top-0.5 left-1 text-xs font-bold pointer-events-none",
+          isLight ? "text-[#B58863]" : "text-[#F0D9B5]"
+        )}>
           {square[1]}
         </div>
       )}
