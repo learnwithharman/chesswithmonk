@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, BookOpen, Swords, GraduationCap, Puzzle, Search, Library } from 'lucide-react';
 import Logo from '@/components/Logo';
+import { toast } from 'sonner';
 
 interface NavigationProps {
     darkMode: boolean;
@@ -12,6 +13,12 @@ const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
     const location = useLocation();
 
     const isActive = (path: string) => location.pathname === path;
+
+    const handleLearnClick = () => {
+        toast.info("Coming Soon", {
+            description: "This feature is under development."
+        });
+    };
 
     return (
         <header className="border-b border-border bg-card/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
@@ -39,12 +46,15 @@ const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
                                 <span className="hidden xl:inline">Openings</span>
                             </Button>
                         </Link>
-                        <Link to="/learn-openings">
-                            <Button variant={isActive('/learn-openings') ? 'secondary' : 'ghost'} size="sm" className="gap-1.5 font-medium">
-                                <GraduationCap className="w-4 h-4" />
-                                <span className="hidden xl:inline">Learn</span>
-                            </Button>
-                        </Link>
+                        <Button
+                            variant={isActive('/learn-openings') ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="gap-1.5 font-medium"
+                            onClick={handleLearnClick}
+                        >
+                            <GraduationCap className="w-4 h-4" />
+                            <span className="hidden xl:inline">Learn</span>
+                        </Button>
                         <Link to="/puzzles">
                             <Button variant={isActive('/puzzles') ? 'secondary' : 'ghost'} size="sm" className="gap-1.5 font-medium">
                                 <Puzzle className="w-4 h-4" />
@@ -85,12 +95,15 @@ const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
                             Openings
                         </Button>
                     </Link>
-                    <Link to="/learn-openings">
-                        <Button variant={isActive('/learn-openings') ? 'secondary' : 'ghost'} size="sm" className="gap-2">
-                            <GraduationCap className="w-4 h-4" />
-                            Learn
-                        </Button>
-                    </Link>
+                    <Button
+                        variant={isActive('/learn-openings') ? 'secondary' : 'ghost'}
+                        size="sm"
+                        className="gap-2"
+                        onClick={handleLearnClick}
+                    >
+                        <GraduationCap className="w-4 h-4" />
+                        Learn
+                    </Button>
                     <Link to="/puzzles">
                         <Button variant={isActive('/puzzles') ? 'secondary' : 'ghost'} size="sm" className="gap-2">
                             <Puzzle className="w-4 h-4" />
