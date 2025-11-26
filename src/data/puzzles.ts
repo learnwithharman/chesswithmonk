@@ -36,14 +36,6 @@ export const PUZZLES: Record<string, Puzzle[]> = {
             theme: "Mate in 2"
         },
         {
-            id: "e4",
-            fen: "r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 8",
-            solution: ["Bxf7+", "Rxf7", "Ng5", "Rf8", "Qh5", "h6", "Qg6#"],
-            rating: 600,
-            hint: "Classic bishop sacrifice on f7 followed by knight and queen attack.",
-            theme: "Mate in 3"
-        },
-        {
             id: "e5",
             fen: "2kr3r/ppp2ppp/2n5/3Q4/8/8/PPP2PPP/2KR3R w - - 0 1",
             solution: ["Qd8+", "Nxd8", "Rxd8#"],
@@ -76,14 +68,6 @@ export const PUZZLES: Record<string, Puzzle[]> = {
             theme: "Mate in 1"
         },
         {
-            id: "e9",
-            fen: "5rk1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1",
-            solution: ["Re8+", "Rxe8", "h4"],
-            rating: 500,
-            hint: "Trade rooks and push the pawn. Wait, this needs to be mate!",
-            theme: "Mate in 1"
-        },
-        {
             id: "e10",
             fen: "6k1/5ppp/8/8/8/5Q2/5PPP/6K1 w - - 0 1",
             solution: ["Qf7+", "Kh8", "Qf8#"],
@@ -98,14 +82,6 @@ export const PUZZLES: Record<string, Puzzle[]> = {
             rating: 520,
             hint: "Infiltrate on f7 and deliver mate on f8.",
             theme: "Mate in 3"
-        },
-        {
-            id: "e12",
-            fen: "r1bqk2r/pppp1Qpp/2n2n2/2b1p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 5",
-            solution: ["Qe7", "Qxe7#"],
-            rating: 440,
-            hint: "Any move loses. The queen dominates.",
-            theme: "Mate in 1"
         }
     ],
     medium: [
@@ -142,28 +118,12 @@ export const PUZZLES: Record<string, Puzzle[]> = {
             theme: "Mate in 4"
         },
         {
-            id: "m5",
-            fen: "r1b2rk1/ppq2ppp/2p1pn2/3n4/2BP4/2P2N2/PP1Q1PPP/R1B2RK1 w - - 0 12",
-            solution: ["Qh6", "Ne7+", "Kh1", "Ng6", "Qxh7+", "Nxh7", "Nf3"],
-            rating: 1180,
-            hint: "Wait, needs proper mate. Infiltrate with queen on h6.",
-            theme: "Mate in 3"
-        },
-        {
             id: "m6",
-            fen: "r2qk2r/ppp2ppp/2n5/3pPb2/1b1P4/2NB1N2/PPP2PPP/R1BQ1RK1 w kq - 0 9",
+            fen: "r2qk2r/ppp2ppp/2n5/3pPb2/1b1P4/2NB3N/PPP2PPP/R1BQ1RK1 w kq - 0 9",
             solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg6", "Qg4", "f5", "Qh5+", "Kf6", "Qf7#"],
             rating: 1220,
             hint: "Force the king into the open and hunt it down.",
             theme: "Mate in 4"
-        },
-        {
-            id: "m7",
-            fen: "r1bq1rk1/ppp2ppp/2np1n2/4p3/1bB1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 8",
-            solution: ["Bxf7+", "Kxf7", "Ng5+", "Kg8", "Qf3", "Rf6", "Qxa8"],
-            rating: 1160,
-            hint: "This should end in mate. Revise solution.",
-            theme: "Mate in 3"
         },
         {
             id: "m8",
@@ -183,7 +143,7 @@ export const PUZZLES: Record<string, Puzzle[]> = {
         },
         {
             id: "m10",
-            fen: "r1b2rk1/ppp2ppp/2n5/3q4/3P4/2PB1Q2/PP3PPP/R1B2RK1 w - - 0 12",
+            fen: "r1b2rk1/ppp2ppp/2n5/3q4/3P4/2PB1Q2/PP4PP/R1B2RK1 w - - 0 12",
             solution: ["Qxf7+", "Kh8", "Qf8+", "Rxf8", "Rxf8#"],
             rating: 1190,
             hint: "Queen sacrifice forces the rook exchange.",

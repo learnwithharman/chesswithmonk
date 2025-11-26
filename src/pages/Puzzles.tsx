@@ -161,6 +161,14 @@ export default function Puzzles() {
     const showSolution = () => {
         if (!currentPuzzle || solved) return;
 
+        // Ensure it's the player's turn (even index = player, odd = opponent)
+        // Also check if game turn matches the puzzle starter color logic if needed, 
+        // but moveIndex is reliable for the solution sequence.
+        if (moveIndex % 2 !== 0) {
+            toast({ title: "Wait for opponent's move", variant: "destructive" });
+            return;
+        }
+
         // Get the next move in the solution
         const nextMoveSan = currentPuzzle.solution[moveIndex];
         const tempGame = new Chess(game.fen());
