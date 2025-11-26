@@ -93,11 +93,11 @@ export const PUZZLES: Record<string, Puzzle[]> = {
         },
         {
             id: "e11",
-            fen: "r4rk1/ppp2ppp/2n5/3q4/3P4/2P2Q2/PP3PPP/R1B2RK1 w - - 0 1",
-            solution: ["Qxf7+", "Kh8", "Qf8#"],
+            fen: "r4rk1/ppp2ppp/2n5/3q4/3P4/2P2Q2/PP4PP/R1B2RK1 w - - 0 1",
+            solution: ["Qxf7+", "Kh8", "Qf8+", "Rxf8", "Rxf8#"],
             rating: 520,
             hint: "Infiltrate on f7 and deliver mate on f8.",
-            theme: "Mate in 2"
+            theme: "Mate in 3"
         },
         {
             id: "e12",

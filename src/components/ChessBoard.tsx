@@ -309,6 +309,7 @@ export const ChessBoard = memo(function ChessBoard({
                   onMouseDown={(e) => handleMouseDown(e, square)}
                   onTouchStart={(e) => handleMouseDown(e, square)}
                   isDragging={false}
+                  customStyle={customSquareStyles[square]}
                 />
                 {isTarget && draggingPiece && (
                   <div className="absolute inset-0 border-4 border-white/50 pointer-events-none z-20 rounded-sm" />
