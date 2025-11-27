@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Chess, Move } from 'chess.js';
 import { ChessBoard } from '@/components/ChessBoard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, RefreshCw, Lightbulb, CheckCircle2, XCircle, ArrowRight, RotateCcw, Play } from 'lucide-react';
+import { Trophy, RefreshCw, Lightbulb, CheckCircle2, ArrowRight, RotateCcw, Play } from 'lucide-react';
 import { PUZZLES, Puzzle } from '@/data/puzzles';
 import {
     Dialog,
@@ -29,40 +29,26 @@ export default function Puzzles() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const { toast } = useToast();
 
-    const loadRandomPuzzle = useCallback(() => {
-        let puzzleList = PUZZLES[difficulty] || [];
+    // Puzzle Rotation Logic
+    // Store indices for each difficulty
+    const puzzleIndices = useRef({ easy: 0, medium: 0, hard: 0 });
 
-        // Filter puzzles based on difficulty requirements
-        puzzleList = puzzleList.filter(p => {
-            const moves = p.solution.length;
-            // Solution length includes both player and opponent moves.
-            // Mate in N means 2N-1 moves (if white mates) or 2N moves (if black mates) usually.
-            // The user requested:
-            // Easy: Mate in 1-3 moves (1-5 ply)
-            // Medium: Mate in 3-4 moves (5-7 ply)
-            // Hard: Mate in 6-7 moves (11-13 ply)
+    const loadNextPuzzle = useCallback(() => {
+        const puzzleList = PUZZLES[difficulty] || PUZZLES['easy'];
 
-            if (difficulty === 'easy') {
-                return moves <= 5; // Mate in 1, 2, or 3
-            } else if (difficulty === 'medium') {
-                return moves >= 5 && moves <= 8; // Mate in 3 or 4
-            } else if (difficulty === 'hard') {
-                return moves >= 9; // Mate in 5, 6, 7+ (Prioritizing harder ones)
-            }
-            return true;
-        });
+        // Get current index for this difficulty
+        let index = puzzleIndices.current[difficulty as keyof typeof puzzleIndices.current];
 
-        // Fallback if strict filtering returns no puzzles (shouldn't happen with good data, but safety first)
-        if (puzzleList.length === 0) {
-            puzzleList = PUZZLES[difficulty] || [];
-        }
+        // Select puzzle
+        const nextPuzzle = puzzleList[index % puzzleList.length];
 
-        const randomPuzzle = puzzleList[Math.floor(Math.random() * puzzleList.length)];
+        // Increment index for next time (wrap around logic handled by modulo above, but good to keep index clean)
+        puzzleIndices.current[difficulty as keyof typeof puzzleIndices.current] = (index + 1) % puzzleList.length;
 
-        if (randomPuzzle) {
-            const newGame = new Chess(randomPuzzle.fen);
+        if (nextPuzzle) {
+            const newGame = new Chess(nextPuzzle.fen);
             setGame(newGame);
-            setCurrentPuzzle(randomPuzzle);
+            setCurrentPuzzle(nextPuzzle);
             setMoveIndex(0);
             setSolved(false);
             setFailed(false);
@@ -74,9 +60,16 @@ export default function Puzzles() {
         }
     }, [difficulty]);
 
+    // Initial load when difficulty changes
     useEffect(() => {
-        loadRandomPuzzle();
-    }, [loadRandomPuzzle]);
+        // When difficulty changes, we want to load the *current* puzzle for that difficulty, 
+        // not necessarily skip to the next one immediately? 
+        // The user said: "On 'Next Puzzle', do: currentIndex++ ... return puzzles[currentIndex]".
+        // But on init/change difficulty, we should probably just load the current one without incrementing?
+        // Or just load the next one. Let's load the next one to ensure fresh start.
+        // Actually, to be safe and consistent, let's just call loadNextPuzzle.
+        loadNextPuzzle();
+    }, [difficulty, loadNextPuzzle]);
 
     const restartPuzzle = () => {
         if (currentPuzzle) {
@@ -100,10 +93,12 @@ export default function Puzzles() {
 
             const playedSan = result.san;
             const expectedSan = currentPuzzle.solution[moveIndex];
-            const sourceSquare = move.from;
-            const targetSquare = move.to;
 
-            if (playedSan === expectedSan) {
+            // Normalize: Remove check/mate symbols for comparison
+            const normalize = (m: string) => m.replace(/[+#]/g, '');
+            const isCorrect = normalize(playedSan) === normalize(expectedSan);
+
+            if (isCorrect) {
                 // Correct move
                 setGame(tempGame);
                 const nextIndex = moveIndex + 1;
@@ -111,8 +106,8 @@ export default function Puzzles() {
 
                 // Green highlight for correct move
                 setCustomSquareStyles({
-                    [sourceSquare]: { backgroundColor: 'rgba(34, 197, 94, 0.5)' },
-                    [targetSquare]: { backgroundColor: 'rgba(34, 197, 94, 0.5)' }
+                    [result.from]: { backgroundColor: 'rgba(34, 197, 94, 0.5)' },
+                    [result.to]: { backgroundColor: 'rgba(34, 197, 94, 0.5)' }
                 });
 
                 if (nextIndex >= currentPuzzle.solution.length) {
@@ -134,23 +129,17 @@ export default function Puzzles() {
                 }
             } else {
                 // Incorrect move
-                // Red highlight for incorrect move
                 setCustomSquareStyles({
-                    [sourceSquare]: { backgroundColor: 'rgba(239, 68, 68, 0.5)' },
-                    [targetSquare]: { backgroundColor: 'rgba(239, 68, 68, 0.5)' }
+                    [move.from]: { backgroundColor: 'rgba(239, 68, 68, 0.5)' },
+                    [move.to]: { backgroundColor: 'rgba(239, 68, 68, 0.5)' }
                 });
 
                 setFailed(true);
                 toast({ title: "Incorrect Move", variant: "destructive" });
 
-                // Snap back logic (clear highlights after delay)
                 setTimeout(() => {
                     setCustomSquareStyles({});
-                    setFailed(false); // Allow retrying immediately or keep failed state? 
-                    // Usually puzzles let you retry, but we can keep the failed state until they undo or restart.
-                    // For now, let's just undo the move visually by not updating 'game' state with the wrong move, 
-                    // which we already did (we only updated tempGame).
-                    // So the board is already back to position.
+                    setFailed(false);
                 }, 1000);
             }
         } catch (e) {
@@ -161,31 +150,23 @@ export default function Puzzles() {
     const showSolution = () => {
         if (!currentPuzzle || solved) return;
 
-        // Ensure it's the player's turn (even index = player, odd = opponent)
-        // Also check if game turn matches the puzzle starter color logic if needed, 
-        // but moveIndex is reliable for the solution sequence.
         if (moveIndex % 2 !== 0) {
             toast({ title: "Wait for opponent's move", variant: "destructive" });
             return;
         }
 
-        // Get the next move in the solution
         const nextMoveSan = currentPuzzle.solution[moveIndex];
         const tempGame = new Chess(game.fen());
 
         try {
-            // Find the move details to get from/to squares
             const result = tempGame.move(nextMoveSan);
             if (!result) return;
 
-            // Highlight the move squares (yellow for hint)
+            // Highlight the destination square (and source)
             setCustomSquareStyles({
-                [result.from]: { backgroundColor: 'rgba(234, 179, 8, 0.5)' }, // Yellow-500
-                [result.to]: { backgroundColor: 'rgba(234, 179, 8, 0.5)' }
+                [result.from]: { backgroundColor: 'rgba(34, 197, 94, 0.5)' },
+                [result.to]: { backgroundColor: 'rgba(34, 197, 94, 0.5)' }
             });
-
-            // Do NOT play the move automatically. 
-            // The user must make the move themselves.
 
         } catch (e) {
             console.error("Failed to find solution move:", e);
@@ -209,7 +190,7 @@ export default function Puzzles() {
                                 <Lightbulb className="w-4 h-4 mr-2" />
                                 Show Solution
                             </Button>
-                            <Button onClick={loadRandomPuzzle} variant="outline">
+                            <Button onClick={loadNextPuzzle} variant="outline">
                                 <RefreshCw className="w-4 h-4 mr-2" />
                                 Next Puzzle
                             </Button>
@@ -227,9 +208,6 @@ export default function Puzzles() {
                                 suggestions={[]}
                                 showSuggestions={false}
                             />
-                            {/* Removed inline solved/failed overlays in favor of the modal/toast approach, 
-                                but keeping failed overlay for immediate feedback if desired, or relying on toast.
-                                User requested a popup for completion. */}
                         </div>
                     </div>
                 </div>
@@ -247,9 +225,9 @@ export default function Puzzles() {
                                         <SelectValue placeholder="Select difficulty" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="easy">Easy (Beginner)</SelectItem>
-                                        <SelectItem value="medium">Medium (Intermediate)</SelectItem>
-                                        <SelectItem value="hard">Hard (Advanced)</SelectItem>
+                                        <SelectItem value="easy">Easy (Mate in 1)</SelectItem>
+                                        <SelectItem value="medium">Medium (Mate in 2-3)</SelectItem>
+                                        <SelectItem value="hard">Hard (Mate in 5-6)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -289,6 +267,10 @@ export default function Puzzles() {
                                     {game.turn() === 'w' ? 'White' : 'Black'}
                                 </span>
                             </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Goal</span>
+                                <span className="font-bold">Mate in {currentPuzzle?.mateIn}</span>
+                            </div>
                             <div className="pt-4 border-t">
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <ArrowRight className="w-4 h-4" />
@@ -308,7 +290,7 @@ export default function Puzzles() {
                             Puzzle Completed!
                         </DialogTitle>
                         <DialogDescription>
-                            Great job! You've solved this puzzle. What would you like to do next?
+                            Great job! You've solved this puzzle.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
@@ -316,7 +298,7 @@ export default function Puzzles() {
                             <RotateCcw className="w-4 h-4 mr-2" />
                             Restart
                         </Button>
-                        <Button onClick={loadRandomPuzzle} className="w-full sm:w-auto">
+                        <Button onClick={loadNextPuzzle} className="w-full sm:w-auto">
                             <Play className="w-4 h-4 mr-2" />
                             Next Puzzle
                         </Button>
