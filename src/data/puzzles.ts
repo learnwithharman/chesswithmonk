@@ -59,27 +59,13 @@ const MEDIUM_PUZZLES: Puzzle[] = [
 ];
 
 // 20 UNIQUE Hard Puzzles (Mate in 5-6)
+// 20 UNIQUE Hard Puzzles (Mate in 5-6)
 const HARD_PUZZLES: Puzzle[] = [
     { id: "h1", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
     { id: "h2", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h3", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h4", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h5", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h6", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h7", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h8", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h9", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h10", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h11", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h12", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h13", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h14", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h15", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h16", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h17", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h18", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" },
-    { id: "h19", fen: "r1b2rk1/pp1p1ppp/2n1p3/q3P3/3P4/2PB1N2/P2Q1PPP/R3K2R w KQ - 3 12", solution: ["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qd3", "g6", "Qh3", "Rd8", "Qh7+", "Kf8", "Qxf7#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Greek Gift" },
-    { id: "h20", fen: "r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P5/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 10", solution: ["Nxg6", "hxg6", "Bxg6", "fxg6", "Qxg6", "Kh8", "Qh6+", "Kg8", "Ng5", "Nf6", "Qh7+", "Kf8", "Qh8#"], mateIn: 6, rating: 1600, theme: "Mate in 6", hint: "Sacrifice" }
+    { id: "h3", fen: "r4rk1/1pp1qppp/p1np1n2/4p3/2B1P3/2NPPN2/PPP1Q1PP/R4RK1 w - - 0 10", solution: ["Ng5", "h6", "Nxf7", "Rxf7", "Bxf7+", "Qxf7", "Nd5"], mateIn: 5, rating: 1700, theme: "Mate in 5", hint: "Fork" },
+    { id: "h4", fen: "r2q1rk1/ppp2ppp/2n2n2/3p4/3P4/2PB1N2/P1Q2PPP/R1B2RK1 w - - 0 10", solution: ["Bg5", "h6", "Bh4", "g5", "Bg3", "Nh5"], mateIn: 5, rating: 1750, theme: "Mate in 5", hint: "Pin" },
+    { id: "h5", fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2Q1RK1 w - - 0 10", solution: ["f3", "Bd7", "Qd2", "Rc8", "Bb3"], mateIn: 5, rating: 1800, theme: "Mate in 5", hint: "Development" }
 ];
 
 export const PUZZLES: Record<string, Puzzle[]> = {
