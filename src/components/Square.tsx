@@ -49,7 +49,7 @@ export function Square({
   return (
     <div
       className={cn(
-        "w-full h-full flex items-center justify-center relative select-none",
+        "w-full h-full flex items-center justify-center relative select-none aspect-square",
         bgClass
       )}
       style={customStyle}
