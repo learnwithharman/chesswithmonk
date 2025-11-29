@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { RotateCcw, Undo, Redo, FlipVertical2, Lightbulb, Play } from 'lucide-react';
+import { RotateCcw, Undo, Redo, FlipVertical2, Lightbulb, Play, Zap } from 'lucide-react';
 import Spinner from './ui/spinner';
 import { Difficulty } from '@/lib/types';
 
@@ -18,6 +18,8 @@ interface ControlsProps {
   canUndo: boolean;
   canRedo: boolean;
   isAiThinking?: boolean;
+  isAutoplay: boolean;
+  onToggleAutoplay: () => void;
 }
 
 const difficultyLabels: Record<Difficulty, string> = {
@@ -47,6 +49,8 @@ export function Controls({
   canUndo,
   canRedo,
   isAiThinking = false,
+  isAutoplay,
+  onToggleAutoplay,
 }: ControlsProps) {
   return (
     <Card>
@@ -149,7 +153,7 @@ export function Controls({
             size="sm"
             onClick={onAiMove}
             className="w-full"
-            disabled={isAiThinking}
+            disabled={isAiThinking || isAutoplay}
           >
             {isAiThinking ? (
               <>
@@ -164,15 +168,25 @@ export function Controls({
             )}
           </Button>
           <Button
-            variant="destructive"
+            variant={isAutoplay ? "default" : "secondary"}
             size="sm"
-            onClick={onNewGame}
-            className="w-full"
+            onClick={onToggleAutoplay}
+            className={`w-full ${isAutoplay ? "animate-pulse" : ""}`}
           >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            New Game
+            <Zap className={`w-4 h-4 mr-2 ${isAutoplay ? "fill-current" : ""}`} />
+            {isAutoplay ? "Autoplay ON" : "Autoplay OFF"}
           </Button>
         </div>
+
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={onNewGame}
+          className="w-full"
+        >
+          <RotateCcw className="w-4 h-4 mr-2" />
+          New Game
+        </Button>
 
         <div className="pt-4 border-t border-border">
           <h4 className="text-xs font-semibold mb-2">Keyboard Shortcuts</h4>
@@ -188,3 +202,4 @@ export function Controls({
     </Card>
   );
 }
+

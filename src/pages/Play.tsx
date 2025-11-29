@@ -40,7 +40,9 @@ const Play = () => {
     const { toast } = useToast();
     const [pendingPromotionMove, setPendingPromotionMove] = useState<Move | null>(null);
     const [openingName, setOpeningName] = useState<string | null>("Starting Position");
+
     const [ecoCode, setEcoCode] = useState<string | null>(null);
+    const [isAutoplay, setIsAutoplay] = useState(false);
 
     useEffect(() => {
         loadEcoTheory();
@@ -53,6 +55,22 @@ const Play = () => {
             setEcoCode(match.eco_code);
         }
     }, [position]);
+
+    // Autoplay Effect
+    useEffect(() => {
+        let timeoutId: NodeJS.Timeout;
+
+        if (isAutoplay && !game.isGameOver() && !pendingPromotionMove && !isAiThinking) {
+            // Small delay to make it look natural
+            timeoutId = setTimeout(() => {
+                handleAiMove();
+            }, 1000);
+        } else if (game.isGameOver() || pendingPromotionMove) {
+            setIsAutoplay(false);
+        }
+
+        return () => clearTimeout(timeoutId);
+    }, [isAutoplay, game, pendingPromotionMove, isAiThinking, currentMoveIndex]);
 
     // Load saved game from localStorage
     useEffect(() => {
@@ -286,6 +304,7 @@ const Play = () => {
         setLastMove(null);
         setSuggestions([]);
         setGameResult(null); // Reset game result to hide popup
+        setIsAutoplay(false);
         toast({ title: 'New Game Started' });
     };
 
@@ -429,6 +448,8 @@ const Play = () => {
                             showSuggestions={showSuggestions}
                             canUndo={currentMoveIndex >= 0}
                             canRedo={currentMoveIndex < historyStack.length - 2}
+                            isAutoplay={isAutoplay}
+                            onToggleAutoplay={() => setIsAutoplay(!isAutoplay)}
                         />
                     </div>
 
@@ -454,6 +475,8 @@ const Play = () => {
                             showSuggestions={showSuggestions}
                             canUndo={currentMoveIndex >= 0}
                             canRedo={currentMoveIndex < historyStack.length - 2}
+                            isAutoplay={isAutoplay}
+                            onToggleAutoplay={() => setIsAutoplay(!isAutoplay)}
                         />
                     </div>
 
