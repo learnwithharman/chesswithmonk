@@ -6,7 +6,6 @@ import { Controls } from '@/components/Controls';
 import { SuggestionPanel } from '@/components/SuggestionPanel';
 import { PGNEditor } from '@/components/PGNEditor';
 import { Move, Suggestion, Difficulty } from '@/lib/types';
-import { MoveQuality } from '@/components/Square';
 import { getSuggestions } from '@/lib/humanPicker';
 // Stockfish engine worker for realistic chess play
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -45,7 +44,6 @@ const Play = () => {
     const [ecoCode, setEcoCode] = useState<string | null>(null);
     const [isAutoplay, setIsAutoplay] = useState(false);
     const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
-    const [moveQualities, setMoveQualities] = useState<Record<string, MoveQuality>>({});
 
     useEffect(() => {
         loadEcoTheory();
@@ -249,25 +247,6 @@ const Play = () => {
                 return;
             }
 
-            // Evaluate move quality
-            if (suggestions.length > 0) {
-                const bestMove = suggestions[0].move;
-                const isBest = bestMove.from === move.from && bestMove.to === move.to;
-                const isGood = suggestions.some(s => s.move.from === move.from && s.move.to === move.to);
-
-                let quality: MoveQuality = null;
-                if (isBest) quality = 'best';
-                else if (isGood) quality = 'good';
-                else quality = 'mistake'; // Simplified logic
-
-                if (quality) {
-                    setMoveQualities(prev => ({
-                        ...prev,
-                        [move.to]: quality
-                    }));
-                }
-            }
-
             // otherwise commit directly
             commitMove(move);
         } catch (e) {
@@ -328,7 +307,6 @@ const Play = () => {
         setCurrentMoveIndex(-1);
         setLastMove(null);
         setSuggestions([]);
-        setMoveQualities({});
         setGameResult(null); // Reset game result to hide popup
         setIsAutoplay(false);
         // If player chose black, flip board automatically
@@ -467,7 +445,6 @@ const Play = () => {
                                 lastMove={lastMove}
                                 suggestions={suggestions}
                                 showSuggestions={showSuggestions}
-                                moveQualities={moveQualities}
                             />
                         </div>
                     </div>

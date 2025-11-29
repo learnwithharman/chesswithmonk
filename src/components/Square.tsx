@@ -1,9 +1,6 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 import { Piece } from './Piece';
-import { Check, ChevronsUp, X, AlertTriangle, Info } from 'lucide-react';
-
-export type MoveQuality = 'brilliant' | 'best' | 'good' | 'inaccuracy' | 'mistake' | 'blunder' | null;
+import { cn } from '@/lib/utils';
 
 interface SquareProps {
   square: string;
@@ -15,7 +12,6 @@ interface SquareProps {
   isCheck?: boolean;
   isHint?: boolean;
   isWrong?: boolean;
-  moveQuality?: MoveQuality;
   onClick: () => void;
   onMouseDown?: (e: React.MouseEvent) => void;
   onTouchStart?: (e: React.TouchEvent) => void;
@@ -23,7 +19,7 @@ interface SquareProps {
   customStyle?: React.CSSProperties;
 }
 
-export const Square = React.memo(function Square({
+export function Square({
   square,
   piece,
   isLight,
@@ -33,7 +29,6 @@ export const Square = React.memo(function Square({
   isCheck,
   isHint,
   isWrong,
-  moveQuality,
   onClick,
   onMouseDown,
   onTouchStart,
@@ -41,84 +36,28 @@ export const Square = React.memo(function Square({
   customStyle
 }: SquareProps) {
 
-  const getQualityColor = (q: MoveQuality) => {
-    switch (q) {
-      case 'brilliant': return 'bg-cyan-400/60';
-      case 'best': return 'bg-green-500/60';
-      case 'good': return 'bg-blue-500/50';
-      case 'inaccuracy': return 'bg-yellow-400/50';
-      case 'mistake': return 'bg-orange-500/60';
-      case 'blunder': return 'bg-red-600/60';
-      default: return '';
-    }
-  };
+  const bgClass = useMemo(() => {
+    if (isCheck) return 'bg-red-500/50';
+    if (isWrong) return 'bg-red-400/60';
+    if (isSelected) return 'bg-yellow-200/80';
+    if (isLastMove) return 'bg-yellow-200/50'; // Standard last move highlight
+    if (isHint) return 'bg-purple-400/50';
 
-  const getQualityIcon = (q: MoveQuality) => {
-    switch (q) {
-      case 'brilliant': return <ChevronsUp className="w-4 h-4 text-cyan-200 drop-shadow-md" />;
-      case 'best': return <Check className="w-4 h-4 text-green-100 drop-shadow-md" />;
-      case 'good': return <Check className="w-3 h-3 text-blue-100 drop-shadow-md" />;
-      case 'inaccuracy': return <Info className="w-3 h-3 text-yellow-100 drop-shadow-md" />;
-      case 'mistake': return <AlertTriangle className="w-4 h-4 text-orange-100 drop-shadow-md" />;
-      case 'blunder': return <X className="w-4 h-4 text-red-100 drop-shadow-md" />;
-      default: return null;
-    }
-  };
+    return isLight ? 'bg-[#ebecd0]' : 'bg-[#779556]';
+  }, [isLight, isSelected, isLastMove, isCheck, isHint, isWrong]);
 
   return (
     <div
       className={cn(
-        'relative w-full aspect-square transition-colors cursor-pointer select-none',
-        isLight ? 'bg-board-light' : 'bg-board-dark',
-        isSelected && 'ring-4 ring-primary ring-inset',
-        isLastMove && 'bg-highlight-amber/40',
-        isDragging && 'opacity-50'
+        "w-full h-full flex items-center justify-center relative select-none",
+        bgClass
       )}
       style={customStyle}
       onClick={onClick}
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
+      data-square={square}
     >
-      {/* Hint/Wrong highlighting */}
-      {isHint && (
-        <div className="absolute inset-0 bg-green-500/40 pointer-events-none z-0" />
-      )}
-      {isWrong && (
-        <div className="absolute inset-0 bg-red-500/50 pointer-events-none z-0" />
-      )}
-
-      {/* Move Quality Highlight */}
-      {moveQuality && (
-        <div className={cn("absolute inset-0 pointer-events-none z-0 animate-pulse", getQualityColor(moveQuality))} />
-      )}
-
-      {/* Piece */}
-      {piece && (
-        <Piece
-          type={piece.type}
-          color={piece.color}
-          draggable={false}
-        />
-      )}
-
-      {/* Move Quality Icon */}
-      {moveQuality && (
-        <div className="absolute top-0 right-0 p-0.5 z-20 pointer-events-none animate-bounce">
-          {getQualityIcon(moveQuality)}
-        </div>
-      )}
-
-      {isLegalMove && (
-        <div className={cn(
-          'absolute inset-0 flex items-center justify-center pointer-events-none',
-        )}>
-          <div className={cn(
-            'rounded-full',
-            piece ? 'w-full h-full border-4 border-gray-400/30' : 'w-1/3 h-1/3 bg-gray-400/30'
-          )} />
-        </div>
-      )}
-
       {isCheck && (
         <div className="absolute inset-0 pointer-events-none z-0" style={{
           background: 'radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0) 70%)',
@@ -126,24 +65,46 @@ export const Square = React.memo(function Square({
         }} />
       )}
 
-      {/* Coordinate labels */}
-      {square[1] === '1' && (
-        <div className={cn(
-          "absolute bottom-0.5 right-1 text-xs font-bold pointer-events-none",
-          isLight ? "text-[#B58863]" : "text-[#F0D9B5]"
+      {/* Rank and File Labels */}
+      {square.endsWith('1') && (
+        <span className={cn(
+          "absolute bottom-0.5 right-1 text-[10px] font-bold z-10",
+          isLight ? "text-[#779556]" : "text-[#ebecd0]"
         )}>
           {square[0]}
-        </div>
+        </span>
       )}
-      {square[0] === 'a' && (
-        <div className={cn(
-          "absolute top-0.5 left-1 text-xs font-bold pointer-events-none",
-          isLight ? "text-[#B58863]" : "text-[#F0D9B5]"
+      {square.startsWith('a') && (
+        <span className={cn(
+          "absolute top-0.5 left-1 text-[10px] font-bold z-10",
+          isLight ? "text-[#779556]" : "text-[#ebecd0]"
         )}>
           {square[1]}
+        </span>
+      )}
+
+      {/* Legal Move Indicator */}
+      {isLegalMove && !piece && (
+        <div className={cn(
+          "w-3 h-3 rounded-full opacity-50",
+          isLight ? "bg-[#779556]" : "bg-[#ebecd0]" // Inverted colors for better visibility
+        )} />
+      )}
+
+      {/* Legal Capture Indicator (Ring) */}
+      {isLegalMove && piece && (
+        <div className="absolute inset-0 rounded-full border-4 border-black/10" />
+      )}
+
+      {/* Piece */}
+      {piece && (
+        <div className={cn(
+          "w-full h-full p-0.5 z-20 cursor-grab active:cursor-grabbing transition-transform",
+          isDragging ? "opacity-50 scale-110" : "opacity-100 scale-100"
+        )}>
+          <Piece type={piece.type} color={piece.color} />
         </div>
       )}
     </div>
   );
-});
-
+}
