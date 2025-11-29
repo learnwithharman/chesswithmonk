@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PGNEditorProps {
@@ -32,6 +32,22 @@ export function PGNEditor({ pgn, onImport }: PGNEditorProps) {
     });
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(pgn);
+      toast({
+        title: 'PGN Copied',
+        description: 'Game PGN copied to clipboard',
+      });
+    } catch (err) {
+      toast({
+        title: 'Copy Failed',
+        description: 'Failed to copy PGN to clipboard',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleImport = () => {
     try {
       onImport(pgnText);
@@ -58,6 +74,16 @@ export function PGNEditor({ pgn, onImport }: PGNEditorProps) {
         {!editingPGN ? (
           <>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+                disabled={!pgn}
+                className="flex-1"
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copy
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -114,3 +140,4 @@ export function PGNEditor({ pgn, onImport }: PGNEditorProps) {
     </Card>
   );
 }
+
