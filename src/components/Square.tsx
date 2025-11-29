@@ -1,6 +1,9 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Piece } from './Piece';
+import { Check, ChevronsUp, X, AlertTriangle, Info } from 'lucide-react';
+
+export type MoveQuality = 'brilliant' | 'best' | 'good' | 'inaccuracy' | 'mistake' | 'blunder' | null;
 
 interface SquareProps {
   square: string;
@@ -12,6 +15,7 @@ interface SquareProps {
   isCheck?: boolean;
   isHint?: boolean;
   isWrong?: boolean;
+  moveQuality?: MoveQuality;
   onClick: () => void;
   onMouseDown?: (e: React.MouseEvent) => void;
   onTouchStart?: (e: React.TouchEvent) => void;
@@ -29,12 +33,38 @@ export const Square = React.memo(function Square({
   isCheck,
   isHint,
   isWrong,
+  moveQuality,
   onClick,
   onMouseDown,
   onTouchStart,
   isDragging,
   customStyle
 }: SquareProps) {
+
+  const getQualityColor = (q: MoveQuality) => {
+    switch (q) {
+      case 'brilliant': return 'bg-cyan-400/60';
+      case 'best': return 'bg-green-500/60';
+      case 'good': return 'bg-blue-500/50';
+      case 'inaccuracy': return 'bg-yellow-400/50';
+      case 'mistake': return 'bg-orange-500/60';
+      case 'blunder': return 'bg-red-600/60';
+      default: return '';
+    }
+  };
+
+  const getQualityIcon = (q: MoveQuality) => {
+    switch (q) {
+      case 'brilliant': return <ChevronsUp className="w-4 h-4 text-cyan-200 drop-shadow-md" />;
+      case 'best': return <Check className="w-4 h-4 text-green-100 drop-shadow-md" />;
+      case 'good': return <Check className="w-3 h-3 text-blue-100 drop-shadow-md" />;
+      case 'inaccuracy': return <Info className="w-3 h-3 text-yellow-100 drop-shadow-md" />;
+      case 'mistake': return <AlertTriangle className="w-4 h-4 text-orange-100 drop-shadow-md" />;
+      case 'blunder': return <X className="w-4 h-4 text-red-100 drop-shadow-md" />;
+      default: return null;
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -49,7 +79,7 @@ export const Square = React.memo(function Square({
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
     >
-      {/* Hint/Wrong highlighting - BEFORE piece so it's behind */}
+      {/* Hint/Wrong highlighting */}
       {isHint && (
         <div className="absolute inset-0 bg-green-500/40 pointer-events-none z-0" />
       )}
@@ -57,13 +87,25 @@ export const Square = React.memo(function Square({
         <div className="absolute inset-0 bg-red-500/50 pointer-events-none z-0" />
       )}
 
-      {/* Piece - rendered AFTER highlights so it's on top */}
+      {/* Move Quality Highlight */}
+      {moveQuality && (
+        <div className={cn("absolute inset-0 pointer-events-none z-0 animate-pulse", getQualityColor(moveQuality))} />
+      )}
+
+      {/* Piece */}
       {piece && (
         <Piece
           type={piece.type}
           color={piece.color}
-          draggable={false} // Disable HTML5 drag, using mouse events instead
+          draggable={false}
         />
+      )}
+
+      {/* Move Quality Icon */}
+      {moveQuality && (
+        <div className="absolute top-0 right-0 p-0.5 z-20 pointer-events-none animate-bounce">
+          {getQualityIcon(moveQuality)}
+        </div>
       )}
 
       {isLegalMove && (
@@ -104,3 +146,4 @@ export const Square = React.memo(function Square({
     </div>
   );
 });
+

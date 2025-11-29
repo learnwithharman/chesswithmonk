@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { Chess, Square as ChessSquare } from 'chess.js';
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
-import { Square } from './Square';
+import { Square, MoveQuality } from './Square';
 import { Piece } from './Piece';
 import { Move, Suggestion } from '@/lib/types';
 
@@ -16,6 +16,7 @@ interface ChessBoardProps {
   wrongMove?: Move | null;
   isDraggable?: boolean;
   customSquareStyles?: Record<string, React.CSSProperties>;
+  moveQualities?: Record<string, MoveQuality>;
 }
 
 interface DraggingState {
@@ -33,7 +34,8 @@ export const ChessBoard = memo(function ChessBoard({
   hintMove,
   wrongMove,
   isDraggable = true,
-  customSquareStyles = {}
+  customSquareStyles = {},
+  moveQualities = {}
 }: ChessBoardProps) {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [legalMoves, setLegalMoves] = useState<string[]>([]);
@@ -305,6 +307,7 @@ export const ChessBoard = memo(function ChessBoard({
                   isCheck={isCheck}
                   isHint={isHintSource || isHintTarget}
                   isWrong={isWrongSource || isWrongTarget}
+                  moveQuality={moveQualities[square]}
                   onClick={() => handleSquareClick(square)}
                   onMouseDown={(e) => handleMouseDown(e, square)}
                   onTouchStart={(e) => handleMouseDown(e, square)}
@@ -345,3 +348,4 @@ export const ChessBoard = memo(function ChessBoard({
     </div>
   );
 });
+
