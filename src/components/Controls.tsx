@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { RotateCcw, Undo, Redo, FlipVertical2, Lightbulb, Play, Zap } from 'lucide-react';
+import { RotateCcw, Undo, Redo, FlipVertical2, Lightbulb, Play, Zap, User } from 'lucide-react';
 import Spinner from './ui/spinner';
 import { Difficulty } from '@/lib/types';
 
@@ -20,6 +20,8 @@ interface ControlsProps {
   isAiThinking?: boolean;
   isAutoplay: boolean;
   onToggleAutoplay: () => void;
+  playerColor: 'w' | 'b';
+  onPlayerColorChange: (color: 'w' | 'b') => void;
 }
 
 const difficultyLabels: Record<Difficulty, string> = {
@@ -51,6 +53,8 @@ export function Controls({
   isAiThinking = false,
   isAutoplay,
   onToggleAutoplay,
+  playerColor,
+  onPlayerColorChange,
 }: ControlsProps) {
   return (
     <Card>
@@ -58,6 +62,34 @@ export function Controls({
         <CardTitle className="text-lg">Controls</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">
+              Play As
+            </Label>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant={playerColor === 'w' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onPlayerColorChange('w')}
+              className="w-full"
+            >
+              <User className="w-4 h-4 mr-2" />
+              White
+            </Button>
+            <Button
+              variant={playerColor === 'b' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onPlayerColorChange('b')}
+              className="w-full"
+            >
+              <User className="w-4 h-4 mr-2" />
+              Black
+            </Button>
+          </div>
+        </div>
+
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium">
@@ -202,4 +234,5 @@ export function Controls({
     </Card>
   );
 }
+
 

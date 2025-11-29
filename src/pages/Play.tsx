@@ -44,6 +44,7 @@ const Play = () => {
 
     const [ecoCode, setEcoCode] = useState<string | null>(null);
     const [isAutoplay, setIsAutoplay] = useState(false);
+    const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
     const [moveQualities, setMoveQualities] = useState<Record<string, MoveQuality>>({});
 
     useEffect(() => {
@@ -62,7 +63,10 @@ const Play = () => {
     useEffect(() => {
         let timeoutId: NodeJS.Timeout;
 
-        if (isAutoplay && !game.isGameOver() && !pendingPromotionMove && !isAiThinking) {
+        // Only autoplay if it's NOT the player's turn
+        const isOpponentTurn = game.turn() !== playerColor;
+
+        if (isAutoplay && isOpponentTurn && !game.isGameOver() && !pendingPromotionMove && !isAiThinking) {
             // Small delay to make it look natural
             timeoutId = setTimeout(() => {
                 handleAiMove();
@@ -72,7 +76,7 @@ const Play = () => {
         }
 
         return () => clearTimeout(timeoutId);
-    }, [isAutoplay, game, pendingPromotionMove, isAiThinking, currentMoveIndex]);
+    }, [isAutoplay, game, pendingPromotionMove, isAiThinking, currentMoveIndex, playerColor]);
 
     // Load saved game from localStorage
     useEffect(() => {
@@ -327,8 +331,28 @@ const Play = () => {
         setMoveQualities({});
         setGameResult(null); // Reset game result to hide popup
         setIsAutoplay(false);
+        // If player chose black, flip board automatically
+        if (playerColor === 'b') {
+            setFlipped(true);
+            // If player is black, AI (White) should move first if autoplay is on.
+            // But usually new game starts with autoplay off.
+            // If we want to support "Play as Black" immediately, we might need to trigger AI move if it's white's turn.
+        } else {
+            setFlipped(false);
+        }
         toast({ title: 'New Game Started' });
     };
+
+    // Effect to trigger AI move if player is Black and it's a new game (White's turn)
+    // and Autoplay is ON. Or maybe just if player is Black, we want AI to move?
+    // The user said "if i selected white autoplay will be used for blackside".
+    // So if I select Black, Autoplay should be used for White side.
+    // If I start a new game as Black, and Autoplay is ON, White should move.
+
+    // Let's ensure board flip matches player color when color changes
+    useEffect(() => {
+        setFlipped(playerColor === 'b');
+    }, [playerColor]);
 
     const handleUndo = () => {
         if (currentMoveIndex >= 0) {
@@ -473,6 +497,8 @@ const Play = () => {
                             canRedo={currentMoveIndex < historyStack.length - 2}
                             isAutoplay={isAutoplay}
                             onToggleAutoplay={() => setIsAutoplay(!isAutoplay)}
+                            playerColor={playerColor}
+                            onPlayerColorChange={setPlayerColor}
                         />
                     </div>
 
@@ -500,6 +526,8 @@ const Play = () => {
                             canRedo={currentMoveIndex < historyStack.length - 2}
                             isAutoplay={isAutoplay}
                             onToggleAutoplay={() => setIsAutoplay(!isAutoplay)}
+                            playerColor={playerColor}
+                            onPlayerColorChange={setPlayerColor}
                         />
                     </div>
 
