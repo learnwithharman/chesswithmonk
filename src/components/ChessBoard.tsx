@@ -213,6 +213,13 @@ export const ChessBoard = memo(function ChessBoard({
   }, [draggingPiece, legalMoves, snapToSquare, onMove, getSquareCenter, squareSize, dragX, dragY, dragTargetSquare]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent, square: string) => {
+    // Prevent default browser behavior (text selection, native drag)
+    // We only prevent default if it's not a touch event or if we want to stop scrolling
+    // For mouse events, this stops text selection.
+    if (e.type === 'mousedown') {
+      e.preventDefault();
+    }
+
     if (!isDraggable) return;
 
     const piece = chess.get(square as any);
@@ -267,7 +274,7 @@ export const ChessBoard = memo(function ChessBoard({
     <div ref={containerRef} className="w-full h-full flex items-center justify-center">
       <div
         ref={boardRef}
-        className="relative bg-board-light grid grid-cols-8 shadow-xl rounded-sm overflow-hidden"
+        className="relative bg-board-light grid grid-cols-8 shadow-xl rounded-sm overflow-hidden select-none"
         style={{
           width: boardSize,
           height: boardSize,
