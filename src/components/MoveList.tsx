@@ -22,12 +22,12 @@ export function MoveList({ moves, currentMoveIndex, onMoveClick, moveQualities }
   }
 
   return (
-    <Card className="flex flex-col w-full h-full">
-      <CardHeader className="pb-2 pt-2.5 px-3">
+    <Card className="flex flex-col h-full">
+      <CardHeader className="pb-2 pt-2.5 px-3 flex-shrink-0">
         <CardTitle className="text-xs font-semibold">Move History</CardTitle>
       </CardHeader>
-      <CardContent className="px-0 pb-2 flex-1">
-        <ScrollArea className="h-[calc(80vh-60px)] px-3">
+      <CardContent className="px-0 pb-2 flex-1 min-h-0">
+        <ScrollArea className="h-full px-3">
           {movePairs.length === 0 ? (
             <p className="text-muted-foreground text-xs">No moves yet</p>
           ) : (

@@ -418,13 +418,22 @@ const Play = () => {
                 onCancel={() => setPendingPromotionMove(null)}
             />
             <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_400px] gap-6 max-w-[1800px] mx-auto">
-                {/* Left Column - Move History */}
-                <div className="hidden lg:block">
-                    <MoveList
-                        moves={moveHistory}
-                        currentMoveIndex={currentMoveIndex}
-                        onMoveClick={handleMoveClick}
-                    />
+                {/* Left Column - Move History & Suggestions */}
+                <div className="hidden lg:flex lg:flex-col h-[calc(100vh-200px)]">
+                    <div className="flex-1 min-h-0">
+                        <MoveList
+                            moves={moveHistory}
+                            currentMoveIndex={currentMoveIndex}
+                            onMoveClick={handleMoveClick}
+                        />
+                    </div>
+                    <div className="h-px bg-border my-2"></div>
+                    <div className="flex-1 min-h-0">
+                        <SuggestionPanel
+                            suggestions={suggestions}
+                            visible={showSuggestions}
+                        />
+                    </div>
                 </div>
 
                 {/* Center Column - Board */}
@@ -485,32 +494,25 @@ const Play = () => {
                     />
                 </div>
 
-                {/* Right Column - Controls & Suggestions */}
-                <div className="space-y-4">
-                    <div className="hidden lg:block">
-                        <Controls
-                            difficulty={difficulty}
-                            onDifficultyChange={setDifficulty}
-                            onNewGame={handleNewGame}
-                            onUndo={handleUndo}
-                            onRedo={handleRedo}
-                            onFlip={() => setFlipped(!flipped)}
-                            onToggleSuggestions={() => setShowSuggestions(!showSuggestions)}
-                            onAiMove={handleAiMove}
-                            isAiThinking={isAiThinking}
-                            showSuggestions={showSuggestions}
-                            canUndo={currentMoveIndex >= 0}
-                            canRedo={currentMoveIndex < historyStack.length - 2}
-                            isAutoplay={isAutoplay}
-                            onToggleAutoplay={() => setIsAutoplay(!isAutoplay)}
-                            playerColor={playerColor}
-                            onPlayerColorChange={setPlayerColor}
-                        />
-                    </div>
-
-                    <SuggestionPanel
-                        suggestions={suggestions}
-                        visible={showSuggestions}
+                {/* Right Column - Controls */}
+                <div className="hidden lg:block">
+                    <Controls
+                        difficulty={difficulty}
+                        onDifficultyChange={setDifficulty}
+                        onNewGame={handleNewGame}
+                        onUndo={handleUndo}
+                        onRedo={handleRedo}
+                        onFlip={() => setFlipped(!flipped)}
+                        onToggleSuggestions={() => setShowSuggestions(!showSuggestions)}
+                        onAiMove={handleAiMove}
+                        isAiThinking={isAiThinking}
+                        showSuggestions={showSuggestions}
+                        canUndo={currentMoveIndex >= 0}
+                        canRedo={currentMoveIndex < historyStack.length - 2}
+                        isAutoplay={isAutoplay}
+                        onToggleAutoplay={() => setIsAutoplay(!isAutoplay)}
+                        playerColor={playerColor}
+                        onPlayerColorChange={setPlayerColor}
                     />
                 </div>
             </div>
