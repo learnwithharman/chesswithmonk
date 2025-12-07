@@ -271,7 +271,7 @@ export const ChessBoard = memo(function ChessBoard({
   }, [chess, selectedSquare, legalMoves, onMove]);
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center p-2 md:p-0">
       <div
         ref={boardRef}
         className="relative bg-board-light grid grid-cols-8 shadow-xl rounded-sm overflow-hidden select-none"

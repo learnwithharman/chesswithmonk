@@ -14,4 +14,16 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-slot', 'lucide-react'],
+          chess: ['chess.js', 'react-chessboard'],
+          animation: ['framer-motion'],
+        },
+      },
+    },
+  },
 }));

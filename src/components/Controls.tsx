@@ -138,7 +138,7 @@ export function Controls({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-3">
           <Button
             variant="outline"
             size="sm"
