@@ -427,8 +427,8 @@ const Play = () => {
                             onMoveClick={handleMoveClick}
                         />
                     </div>
-                    <div className="h-px bg-border my-2"></div>
-                    <div className="flex-1 min-h-0">
+                    <div className="h-px bg-border my-2 shrink-0"></div>
+                    <div className="h-[320px] shrink-0 min-h-0">
                         <SuggestionPanel
                             suggestions={suggestions}
                             visible={showSuggestions}
