@@ -27,14 +27,22 @@ interface GameState {
     isTimerRunning: boolean;
     showSolution: boolean;
     showCelebration: boolean;
+    isCourseCompleted: boolean;
 }
 
-const FamousOpenings = () => {
+interface FamousOpeningsProps {
+    onCourseStart?: () => void;
+    onCourseEnd?: () => void;
+}
+
+const FamousOpenings = ({ onCourseStart, onCourseEnd }: FamousOpeningsProps) => {
     const [selectedOpening, setSelectedOpening] = useState<FamousOpeningData | null>(null);
     const [filter, setFilter] = useState<'all' | 'white' | 'black'>('all');
     const [learnedLines, setLearnedLines] = useState<Record<string, number>>({});
     const [suggestedMove, setSuggestedMove] = useState<Move | null>(null);
     const [customSquareStyles, setCustomSquareStyles] = useState<Record<string, React.CSSProperties>>({});
+    const [showCompletionMenu, setShowCompletionMenu] = useState(false);
+    const [pendingOpening, setPendingOpening] = useState<FamousOpeningData | null>(null);
     const { toast } = useToast();
 
     // Game State
@@ -50,7 +58,8 @@ const FamousOpenings = () => {
         timer: 10,
         isTimerRunning: false,
         showSolution: false,
-        showCelebration: false
+        showCelebration: false,
+        isCourseCompleted: false
     });
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -62,6 +71,15 @@ const FamousOpenings = () => {
             setLearnedLines(JSON.parse(saved));
         }
     }, []);
+
+    // Notify parent of view change
+    useEffect(() => {
+        if (selectedOpening) {
+            onCourseStart?.();
+        } else {
+            onCourseEnd?.();
+        }
+    }, [selectedOpening, onCourseStart, onCourseEnd]);
 
     // Save progress
     const saveProgress = (openingId: string) => {
@@ -119,6 +137,20 @@ const FamousOpenings = () => {
     }, [gameState.currentMoveIndex, gameState.mode, gameState.isLineCompleted, selectedOpening]);
 
     const startCourse = (opening: FamousOpeningData, mode: Mode = 'learn') => {
+        // Check completion
+        const progress = learnedLines[opening.id] || 0;
+        const isComplete = progress >= opening.totalLines;
+
+        if (isComplete) {
+            setPendingOpening(opening);
+            setShowCompletionMenu(true);
+            return;
+        }
+
+        launchCourse(opening, mode);
+    };
+
+    const launchCourse = (opening: FamousOpeningData, mode: Mode) => {
         setSelectedOpening(opening);
         const chess = new Chess();
         setGameState({
@@ -133,9 +165,30 @@ const FamousOpenings = () => {
             timer: 10,
             isTimerRunning: mode === 'time',
             showSolution: false,
-            showCelebration: false
+            showCelebration: false,
+            isCourseCompleted: false
         });
         setCustomSquareStyles({});
+    };
+
+    const handleRestartCourse = () => {
+        if (!pendingOpening) return;
+
+        // Reset progress
+        const newProgress = { ...learnedLines, [pendingOpening.id]: 0 };
+        setLearnedLines(newProgress);
+        localStorage.setItem('famous_openings_progress', JSON.stringify(newProgress));
+
+        setShowCompletionMenu(false);
+        launchCourse(pendingOpening, 'learn');
+        setPendingOpening(null);
+    };
+
+    const handleContinueReview = () => {
+        if (!pendingOpening) return;
+        setShowCompletionMenu(false);
+        launchCourse(pendingOpening, 'learn');
+        setPendingOpening(null);
     };
 
     const currentLine = selectedOpening?.lines[gameState.currentLineIndex];
@@ -331,6 +384,17 @@ const FamousOpenings = () => {
 
     const nextLine = () => {
         if (!selectedOpening) return;
+
+        // Check if course is completed
+        if (gameState.currentLineIndex + 1 >= selectedOpening.lines.length) {
+            setGameState(prev => ({
+                ...prev,
+                isCourseCompleted: true,
+                showCelebration: true
+            }));
+            return;
+        }
+
         const nextIndex = (gameState.currentLineIndex + 1) % selectedOpening.lines.length;
 
         setGameState({
@@ -345,7 +409,8 @@ const FamousOpenings = () => {
             timer: 10,
             isTimerRunning: gameState.mode === 'time',
             showSolution: false,
-            showCelebration: false
+            showCelebration: false,
+            isCourseCompleted: false
         });
         setCustomSquareStyles({});
     };
@@ -374,33 +439,70 @@ const FamousOpenings = () => {
         const percent = Math.round((progress / selectedOpening.totalLines) * 100);
 
         return (
-            <div className="h-full w-full flex items-center justify-center p-4 lg:p-8 bg-background overflow-hidden">
+            <div className="container mx-auto px-4 py-8">
                 {/* Celebration Dialog */}
                 <Dialog open={gameState.showCelebration} onOpenChange={(open) => !open && setGameState(p => ({ ...p, showCelebration: false }))}>
                     <DialogContent className="sm:max-w-md text-center">
                         <DialogHeader>
                             <div className="mx-auto mb-4 bg-primary/10 p-3 rounded-full w-fit">
-                                <PartyPopper className="w-8 h-8 text-primary" />
+                                {gameState.isCourseCompleted ? (
+                                    <Trophy className="w-8 h-8 text-primary" />
+                                ) : (
+                                    <PartyPopper className="w-8 h-8 text-primary" />
+                                )}
                             </div>
-                            <DialogTitle className="text-2xl text-center">Line Completed!</DialogTitle>
+                            <DialogTitle className="text-2xl text-center">
+                                {gameState.isCourseCompleted ? "Course Completed!" : "Line Completed!"}
+                            </DialogTitle>
                             <DialogDescription className="text-center">
-                                Congratulations! You have learned this line.
+                                {gameState.isCourseCompleted
+                                    ? "Congratulations! You have mastered all lines in this opening."
+                                    : "Congratulations! You have learned this line."}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="flex flex-col gap-3 py-4">
-                            <Button onClick={nextLine} className="w-full text-lg h-12">
-                                Learn Next Line <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
-                            </Button>
+                            {!gameState.isCourseCompleted ? (
+                                <Button onClick={nextLine} className="w-full text-lg h-12">
+                                    Learn Next Line <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
+                                </Button>
+                            ) : (
+                                <Button onClick={() => {
+                                    setGameState(p => ({ ...p, showCelebration: false, mode: 'drill', isCourseCompleted: false }));
+                                    resetLine();
+                                }} className="w-full text-lg h-12">
+                                    Start Drill Mode <Zap className="w-4 h-4 ml-2" />
+                                </Button>
+                            )}
+
                             <div className="grid grid-cols-2 gap-3">
                                 <Button variant="outline" onClick={() => {
-                                    setGameState(p => ({ ...p, showCelebration: false, mode: 'drill' }));
+                                    setGameState(p => ({ ...p, showCelebration: false, mode: 'drill', isCourseCompleted: false }));
                                     resetLine();
                                 }}>
                                     <Zap className="w-4 h-4 mr-2" /> Drill
                                 </Button>
-                                <Button variant="outline" onClick={resetLine}>
-                                    <RotateCcw className="w-4 h-4 mr-2" /> Practice Again
-                                </Button>
+                                {gameState.isCourseCompleted ? (
+                                    <Button variant="outline" onClick={() => {
+                                        // Restart course logic: reset to line 0
+                                        setGameState(prev => ({
+                                            ...prev,
+                                            currentLineIndex: 0,
+                                            currentMoveIndex: 0,
+                                            chess: new Chess(),
+                                            feedback: null,
+                                            hint: null,
+                                            isLineCompleted: false,
+                                            showCelebration: false,
+                                            isCourseCompleted: false
+                                        }));
+                                    }}>
+                                        <RotateCcw className="w-4 h-4 mr-2" /> Restart Course
+                                    </Button>
+                                ) : (
+                                    <Button variant="outline" onClick={resetLine}>
+                                        <RotateCcw className="w-4 h-4 mr-2" /> Practice Again
+                                    </Button>
+                                )}
                             </div>
                             <Button variant="ghost" onClick={() => setSelectedOpening(null)}>
                                 Back to Course
@@ -409,106 +511,228 @@ const FamousOpenings = () => {
                     </DialogContent>
                 </Dialog>
 
-                <div className="flex flex-col lg:flex-row gap-8 w-full max-w-[1800px] h-full items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_400px] gap-6 max-w-[1800px] mx-auto">
 
-                    {/* LEFT: Board Area - Maximized and Centered */}
-                    <div className="flex-1 flex items-center justify-center h-full min-h-0 w-full">
-                        {/* Container for the board that constrains it to be square and fit within viewport */}
-                        <div className="max-w-full max-h-full aspect-square relative flex items-center justify-center">
-                            <ChessBoard
-                                chess={gameState.chess}
-                                onMove={handleMove}
-                                flipped={selectedOpening.color === 'black'}
-                                lastMove={null}
-                                suggestions={[]}
-                                showSuggestions={false}
-                                isDraggable={true}
-                                hintMove={gameState.mode === 'learn' ? suggestedMove : null}
-                                customSquareStyles={customSquareStyles}
-                            />
-                        </div>
+                    {/* LEFT COLUMN: Navigation & Modes */}
+                    <div className="hidden lg:flex lg:flex-col gap-4">
+                        <Button variant="outline" className="justify-start" onClick={() => setSelectedOpening(null)}>
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back to Courses
+                        </Button>
+
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base">Training Mode</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid gap-2">
+                                <Button
+                                    variant={gameState.mode === 'learn' ? 'default' : 'ghost'}
+                                    className="justify-start"
+                                    onClick={() => setGameState(p => ({ ...p, mode: 'learn', isTimerRunning: false }))}
+                                >
+                                    <BookOpen className="w-4 h-4 mr-2" />
+                                    <div className="flex flex-col items-start ml-1">
+                                        <span className="text-sm font-semibold">Learn</span>
+                                    </div>
+                                </Button>
+                                <Button
+                                    variant={gameState.mode === 'practice' ? 'default' : 'ghost'}
+                                    className="justify-start"
+                                    onClick={() => setGameState(p => ({ ...p, mode: 'practice', isTimerRunning: false }))}
+                                >
+                                    <Crosshair className="w-4 h-4 mr-2" />
+                                    <div className="flex flex-col items-start ml-1">
+                                        <span className="text-sm font-semibold">Practice</span>
+                                    </div>
+                                </Button>
+                                <Button
+                                    variant={gameState.mode === 'drill' ? 'default' : 'ghost'}
+                                    className="justify-start"
+                                    onClick={() => setGameState(p => ({ ...p, mode: 'drill', isTimerRunning: false }))}
+                                >
+                                    <Zap className="w-4 h-4 mr-2" />
+                                    <div className="flex flex-col items-start ml-1">
+                                        <span className="text-sm font-semibold">Drill</span>
+                                    </div>
+                                </Button>
+                                <Button
+                                    variant={gameState.mode === 'time' ? 'default' : 'ghost'}
+                                    className="justify-start"
+                                    onClick={() => setGameState(p => ({ ...p, mode: 'time', isTimerRunning: true }))}
+                                >
+                                    <Timer className="w-4 h-4 mr-2" />
+                                    <div className="flex flex-col items-start ml-1">
+                                        <span className="text-sm font-semibold">Time</span>
+                                    </div>
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base">Actions</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid gap-2">
+                                <Button variant="outline" onClick={resetLine} className="justify-start">
+                                    <RotateCcw className="w-4 h-4 mr-2" /> Restart Line
+                                </Button>
+                                {!gameState.isLineCompleted && gameState.mode !== 'drill' && gameState.mode !== 'learn' && (
+                                    <>
+                                        <Button variant="outline" onClick={showHint} disabled={!!gameState.hint} className="justify-start">
+                                            <Lightbulb className="w-4 h-4 mr-2" /> Hint
+                                        </Button>
+                                        <Button variant="outline" onClick={showSolution} className="justify-start">
+                                            <CheckCircle className="w-4 h-4 mr-2" /> Solution
+                                        </Button>
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
 
-                    {/* RIGHT: Control Panel - Fixed Width Sidebar */}
-                    <div className="w-full lg:w-[400px] shrink-0 flex flex-col gap-3 h-full max-h-[90vh] overflow-hidden">
-
-                        {/* Header: Title & Back */}
-                        <div className="flex items-center gap-3 shrink-0 pb-1.5 border-b border-border/40">
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedOpening(null)} className="h-8 w-8">
-                                <ArrowLeft className="w-4 h-4" />
-                            </Button>
-                            <div>
-                                <h2 className="text-lg font-bold leading-tight">{selectedOpening.name}</h2>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Badge variant="outline" className="text-[10px] h-5 px-1.5">{gameState.mode}</Badge>
-                                    <span>Line {gameState.currentLineIndex + 1} / {selectedOpening.lines.length}</span>
-                                </div>
+                    {/* CENTER COLUMN: Board */}
+                    <div className="space-y-4">
+                        <div className="w-full flex items-center justify-center">
+                            <div className="max-w-full max-h-[80vh] aspect-square relative flex items-center justify-center">
+                                <ChessBoard
+                                    chess={gameState.chess}
+                                    onMove={handleMove}
+                                    flipped={selectedOpening.color === 'black'}
+                                    lastMove={null}
+                                    suggestions={[]}
+                                    showSuggestions={false}
+                                    isDraggable={true}
+                                    hintMove={gameState.mode === 'learn' ? suggestedMove : null}
+                                    customSquareStyles={customSquareStyles}
+                                />
                             </div>
                         </div>
 
-                        {/* Explanation / Feedback Bubble */}
-                        <Card className="bg-muted/30 border-none shadow-sm shrink-0 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-primary/50" />
-                            <CardContent className="p-3 text-sm leading-relaxed relative">
+                        {/* Mobile Fallback Controls */}
+                        <div className="lg:hidden flex flex-col gap-4">
+                            <div className="flex items-center justify-between bg-card p-3 rounded-lg border">
+                                <Button variant="ghost" size="icon" onClick={() => setSelectedOpening(null)}>
+                                    <ArrowLeft className="w-5 h-5" />
+                                </Button>
+                                <div className="text-center">
+                                    <h2 className="font-bold text-sm">{selectedOpening.name}</h2>
+                                    <p className="text-xs text-muted-foreground">Line {gameState.currentLineIndex + 1} / {selectedOpening.lines.length}</p>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={resetLine}>
+                                    <RotateCcw className="w-5 h-5" />
+                                </Button>
+                            </div>
+
+                            {/* Mobile Navigation */}
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="icon" onClick={prevMove} disabled={gameState.currentMoveIndex === 0}>
+                                    <ArrowLeft className="w-4 h-4" />
+                                </Button>
                                 {gameState.isLineCompleted ? (
-                                    <div className="flex items-center gap-3 text-green-500 font-medium">
-                                        <CheckCircle className="w-5 h-5" />
-                                        <span>Line Completed!</span>
+                                    <Button onClick={nextLine} className="flex-1 bg-green-600 text-white">
+                                        Next Line <ChevronRight className="w-4 h-4 ml-2" />
+                                    </Button>
+                                ) : gameState.mode === 'learn' ? (
+                                    <Button onClick={nextMove} className="flex-1">
+                                        Next Move <ChevronRight className="w-4 h-4 ml-2" />
+                                    </Button>
+                                ) : <div className="flex-1" />}
+                            </div>
+
+                            {/* Mobile Feedback */}
+                            <Card className="bg-muted/30 border-none shadow-sm">
+                                <CardContent className="p-3 text-sm">
+                                    {gameState.feedback ? (
+                                        <div className={`font-bold ${gameState.feedback.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+                                            {gameState.feedback.message}
+                                        </div>
+                                    ) : gameState.isLineCompleted ? (
+                                        <div className="text-green-500 font-bold flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Line Completed!</div>
+                                    ) : (
+                                        <div className="text-muted-foreground">
+                                            {gameState.mode === 'learn' ? `Play ${currentLine?.moves[gameState.currentMoveIndex]}` : 'Make your move...'}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: Details & Progress */}
+                    <div className="hidden lg:flex lg:flex-col gap-4">
+                        {/* Title Panel */}
+                        <div className="bg-card/50 backdrop-blur-sm p-4 rounded-lg border border-border text-center">
+                            <div className="flex items-center justify-between mb-2">
+                                <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{gameState.mode} Mode</Badge>
+                                <span className="text-xs text-muted-foreground">Line {gameState.currentLineIndex + 1} of {selectedOpening.lines.length}</span>
+                            </div>
+                            <h2 className="text-xl font-bold text-foreground leading-tight">{selectedOpening.name}</h2>
+                        </div>
+
+                        {/* Explanation / Feedback Bubble */}
+                        <Card className="bg-muted/30 border-dashed shadow-sm relative overflow-hidden">
+                            {/* Keep existing explanation logic but cleaned up for sidebar */}
+                            <div className="absolute top-0 left-0 w-1 h-full bg-primary/50" />
+                            <CardContent className="p-4 text-sm leading-relaxed relative">
+                                {gameState.isLineCompleted ? (
+                                    <div className="flex items-center gap-3 text-green-500 font-medium p-2">
+                                        <CheckCircle className="w-6 h-6" />
+                                        <span className="text-lg">Line Completed!</span>
+                                    </div>
+                                ) : percent === 100 && gameState.mode === 'learn' ? (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2 text-primary font-bold text-lg">
+                                            <Trophy className="w-6 h-6" />
+                                            Course Completed!
+                                        </div>
+                                        <p className="text-muted-foreground">
+                                            Congratulations! You have mastered all lines in this opening.
+                                        </p>
+                                        <div className="bg-primary/10 p-3 rounded-md text-primary text-xs font-semibold">
+                                            Recommendation: Switch to Practice or Drill mode to test your memory without hints!
+                                        </div>
+
+                                        {/* Still show the current move info below if they want to play */}
+                                        <div className="border-t border-border/40 pt-3 opacity-75">
+                                            <div className="font-semibold text-xs text-muted-foreground mb-1 uppercase">Current Move</div>
+                                            <div className="text-sm font-medium">Play {currentLine?.moves[gameState.currentMoveIndex]}</div>
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
                                         {gameState.mode === 'learn' ? (
-                                            <div className="space-y-3">
-                                                {/* Suggested Move */}
+                                            <div className="space-y-4">
                                                 <div className="flex items-start gap-3">
                                                     <div className="bg-primary/10 p-2 rounded-md shrink-0">
-                                                        <span className="font-mono font-bold text-primary text-base">
+                                                        <span className="font-mono font-bold text-primary text-xl">
                                                             {currentLine?.moves[gameState.currentMoveIndex]}
                                                         </span>
                                                     </div>
-                                                    <div className="flex-1">
-                                                        <div className="font-semibold text-xs text-muted-foreground mb-1">
-                                                            SUGGESTED MOVE
-                                                        </div>
-                                                        <div className="text-sm">
-                                                            Play {currentLine?.moves[gameState.currentMoveIndex]}
-                                                        </div>
+                                                    <div>
+                                                        <div className="font-semibold text-xs text-muted-foreground mb-1 uppercase">Suggested Move</div>
+                                                        <div className="text-sm font-medium">Play {currentLine?.moves[gameState.currentMoveIndex]}</div>
                                                     </div>
                                                 </div>
-
-                                                {/* Explanation */}
                                                 <div className="border-t border-border/40 pt-3">
-                                                    <div className="font-semibold text-xs text-muted-foreground mb-1">
-                                                        WHY THIS MOVE?
-                                                    </div>
-                                                    <div className="text-sm leading-relaxed">
-                                                        {currentLine?.explanations[gameState.currentMoveIndex] ||
-                                                            "Make this move to continue the line."}
+                                                    <div className="font-semibold text-xs text-muted-foreground mb-1 uppercase">Why this move?</div>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {currentLine?.explanations[gameState.currentMoveIndex] || "Make this move to continue the line."}
                                                     </div>
                                                 </div>
-
-                                                {/* Previous move context */}
-                                                {gameState.currentMoveIndex > 0 && (
-                                                    <div className="border-t border-border/40 pt-3">
-                                                        <div className="font-semibold text-xs text-muted-foreground mb-1">
-                                                            RESPONDING TO
-                                                        </div>
-                                                        <div className="text-sm">
-                                                            Opponent played <span className="font-mono font-semibold">
-                                                                {currentLine?.moves[gameState.currentMoveIndex - 1]}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         ) : (
-                                            <div className="flex flex-col items-center text-center py-2 gap-2">
+                                            <div className="flex flex-col items-center text-center py-4 gap-2">
                                                 {gameState.feedback ? (
                                                     <div className={`text-lg font-bold ${gameState.feedback.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
                                                         {gameState.feedback.message}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-muted-foreground">Find the best move...</span>
+                                                    <span className="text-lg text-muted-foreground font-medium">Find the best move...</span>
+                                                )}
+                                                {gameState.hint && (
+                                                    <div className="mt-2 p-2 bg-yellow-500/10 text-yellow-600 rounded text-xs flex gap-2 items-center">
+                                                        <Lightbulb className="w-3 h-3" /> {gameState.hint}
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
@@ -517,151 +741,74 @@ const FamousOpenings = () => {
                             </CardContent>
                         </Card>
 
-                        {/* Mode Selectors Grid */}
-                        <div className="grid grid-cols-2 gap-2 shrink-0">
-                            <Button
-                                variant={gameState.mode === 'learn' ? 'default' : 'outline'}
-                                className="justify-start h-12"
-                                onClick={() => setGameState(p => ({ ...p, mode: 'learn', isTimerRunning: false }))}
-                            >
-                                <BookOpen className="w-4 h-4 mr-2" />
-                                <div className="flex flex-col items-start text-xs">
-                                    <span className="font-bold text-sm">Learn</span>
-                                    <span className="opacity-70 font-normal">Study the lines</span>
-                                </div>
-                            </Button>
-                            <Button
-                                variant={gameState.mode === 'practice' ? 'default' : 'outline'}
-                                className="justify-start h-12"
-                                onClick={() => setGameState(p => ({ ...p, mode: 'practice', isTimerRunning: false }))}
-                            >
-                                <Crosshair className="w-4 h-4 mr-2" />
-                                <div className="flex flex-col items-start text-xs">
-                                    <span className="font-bold text-sm">Practice</span>
-                                    <span className="opacity-70 font-normal">Test yourself</span>
-                                </div>
-                            </Button>
-                            <Button
-                                variant={gameState.mode === 'drill' ? 'default' : 'outline'}
-                                className="justify-start h-12"
-                                onClick={() => setGameState(p => ({ ...p, mode: 'drill', isTimerRunning: false }))}
-                            >
-                                <Zap className="w-4 h-4 mr-2" />
-                                <div className="flex flex-col items-start text-xs">
-                                    <span className="font-bold text-sm">Drill</span>
-                                    <span className="opacity-70 font-normal">Build muscle memory</span>
-                                </div>
-                            </Button>
-                            <Button
-                                variant={gameState.mode === 'time' ? 'default' : 'outline'}
-                                className="justify-start h-12"
-                                onClick={() => setGameState(p => ({ ...p, mode: 'time', isTimerRunning: true }))}
-                            >
-                                <Timer className="w-4 h-4 mr-2" />
-                                <div className="flex flex-col items-start text-xs">
-                                    <span className="font-bold text-sm">Time</span>
-                                    <span className="opacity-70 font-normal">Race the clock</span>
-                                </div>
-                            </Button>
-                        </div>
-
-                        {/* Stats / Progress */}
-                        <div className="grid grid-cols-2 gap-2 shrink-0">
+                        {/* Progress & Stats Cards */}
+                        <div className="grid grid-cols-2 gap-3">
                             <Card className="bg-card border shadow-sm">
                                 <CardContent className="p-3 flex flex-col gap-1">
-                                    <span className="text-xs text-muted-foreground">Progress</span>
+                                    <span className="text-xs text-muted-foreground">Total Completion</span>
                                     <div className="flex items-end justify-between">
-                                        <span className="font-bold text-lg">{percent}%</span>
-                                        <span className="text-xs text-muted-foreground mb-1">{progress}/{selectedOpening.totalLines}</span>
+                                        <span className="font-bold text-xl">{percent}%</span>
+                                        <Progress value={percent} className="h-1.5 w-full mt-1" />
                                     </div>
-                                    <Progress value={percent} className="h-1" />
                                 </CardContent>
                             </Card>
 
-                            {gameState.mode === 'drill' ? (
-                                <Card className="bg-card border shadow-sm">
-                                    <CardContent className="p-3 flex flex-col gap-1">
-                                        <span className="text-xs text-muted-foreground">Streak</span>
-                                        <div className="flex items-center gap-2">
-                                            <Zap className="w-5 h-5 text-orange-500 fill-orange-500" />
-                                            <span className="font-bold text-lg">{gameState.streak}</span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ) : gameState.mode === 'time' ? (
-                                <Card className="bg-card border shadow-sm">
-                                    <CardContent className="p-3 flex flex-col gap-1">
-                                        <span className="text-xs text-muted-foreground">Time</span>
-                                        <div className="flex items-center gap-2">
-                                            <Timer className={`w-5 h-5 ${gameState.timer < 3 ? 'text-red-500' : 'text-primary'}`} />
-                                            <span className={`font-bold text-lg font-mono ${gameState.timer < 3 ? 'text-red-500' : ''}`}>{gameState.timer}s</span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ) : (
-                                <Card className="bg-card border shadow-sm">
-                                    <CardContent className="p-3 flex flex-col gap-1">
-                                        <span className="text-xs text-muted-foreground">Accuracy</span>
-                                        <div className="flex items-center gap-2">
-                                            <Trophy className="w-5 h-5 text-yellow-500" />
-                                            <span className="font-bold text-lg">-</span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
+                            {/* Dynamic Stat Card */}
+                            <Card className="bg-card border shadow-sm">
+                                <CardContent className="p-3 flex flex-col gap-1">
+                                    {gameState.mode === 'drill' ? (
+                                        <>
+                                            <span className="text-xs text-muted-foreground">Streak</span>
+                                            <div className="flex items-center gap-2">
+                                                <Zap className="w-5 h-5 text-orange-500" />
+                                                <span className="font-bold text-xl">{gameState.streak}</span>
+                                            </div>
+                                        </>
+                                    ) : gameState.mode === 'time' ? (
+                                        <>
+                                            <span className="text-xs text-muted-foreground">Time Remaining</span>
+                                            <div className="flex items-center gap-2">
+                                                <Timer className={`w-5 h-5 ${gameState.timer < 3 ? 'text-red-500' : 'text-primary'}`} />
+                                                <span className={`font-bold text-xl font-mono ${gameState.timer < 3 ? 'text-red-500' : ''}`}>{gameState.timer}s</span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-xs text-muted-foreground">Current Line</span>
+                                            <div className="flex items-center gap-2">
+                                                <Trophy className="w-5 h-5 text-yellow-500" />
+                                                <span className="font-bold text-xl">#{gameState.currentLineIndex + 1}</span>
+                                            </div>
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
                         </div>
 
+                        {/* Bottom Navigation */}
+                        <div className="mt-auto pt-4 flex items-center gap-2">
+                            <Button variant="outline" size="icon" onClick={prevMove} disabled={gameState.currentMoveIndex === 0} className="shrink-0 h-10 w-10">
+                                <ArrowLeft className="w-4 h-4" />
+                            </Button>
 
-
-                        {/* Bottom Controls */}
-                        <div className="flex flex-col gap-2 shrink-0">
-                            {/* Hint / Solution */}
-                            {!gameState.isLineCompleted && gameState.mode !== 'drill' && gameState.mode !== 'learn' && (
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button variant="secondary" onClick={showHint} disabled={!!gameState.hint} className="h-10">
-                                        <Lightbulb className="w-4 h-4 mr-2" /> Hint
-                                    </Button>
-                                    <Button variant="secondary" onClick={showSolution} className="h-10">
-                                        <CheckCircle className="w-4 h-4 mr-2" /> Solution
-                                    </Button>
+                            {gameState.isLineCompleted ? (
+                                <Button onClick={nextLine} className="flex-1 h-10 bg-green-600 hover:bg-green-700 text-white font-semibold shadow-sm">
+                                    Next Line <ChevronRight className="w-4 h-4 ml-2" />
+                                </Button>
+                            ) : gameState.mode === 'learn' ? (
+                                <Button onClick={nextMove} className="flex-1 h-10 shadow-sm">
+                                    Next Move <ChevronRight className="w-4 h-4 ml-2" />
+                                </Button>
+                            ) : (
+                                <div className="flex-1 text-center text-xs text-muted-foreground font-mono">
+                                    {gameState.currentMoveIndex} / {currentLine?.moves.length} moves
                                 </div>
                             )}
-
-                            {/* Hint Display */}
-                            {gameState.hint && (
-                                <Alert className="py-2">
-                                    <Lightbulb className="h-4 w-4" />
-                                    <AlertDescription className="text-xs">{gameState.hint}</AlertDescription>
-                                </Alert>
-                            )}
-
-                            {/* Navigation / Next Move */}
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" onClick={prevMove} disabled={gameState.currentMoveIndex === 0} className="shrink-0">
-                                    <ArrowLeft className="w-4 h-4" />
-                                </Button>
-
-                                {gameState.isLineCompleted ? (
-                                    <Button onClick={nextLine} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-                                        Next Line <ChevronRight className="w-4 h-4 ml-2" />
-                                    </Button>
-                                ) : gameState.mode === 'learn' ? (
-                                    <Button onClick={nextMove} className="flex-1">
-                                        Next Move <ChevronRight className="w-4 h-4 ml-2" />
-                                    </Button>
-                                ) : (
-                                    <div className="flex-1" />
-                                )}
-
-                                <Button variant="outline" size="icon" onClick={resetLine} className="shrink-0" title="Restart Line">
-                                    <RotateCcw className="w-4 h-4" />
-                                </Button>
-                            </div>
                         </div>
 
                     </div>
-                </div >
-            </div >
+                </div>
+            </div>
         );
     }
 
@@ -697,6 +844,30 @@ const FamousOpenings = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Completion Menu Dialog */}
+            <Dialog open={showCompletionMenu} onOpenChange={setShowCompletionMenu}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Trophy className="w-6 h-6 text-yellow-500" />
+                            Course Completed!
+                        </DialogTitle>
+                        <DialogDescription>
+                            You have already mastered 100% of the lines in <strong>{pendingOpening?.name}</strong>.
+                            What would you like to do?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-3 py-4">
+                        <Button onClick={handleContinueReview} className="w-full h-12 text-lg">
+                            <BookOpen className="w-4 h-4 mr-2" /> Continue / Review
+                        </Button>
+                        <Button variant="outline" onClick={handleRestartCourse} className="w-full">
+                            <RotateCcw className="w-4 h-4 mr-2" /> Restart Course (Reset Progress)
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredOpenings.map(opening => {
@@ -741,7 +912,7 @@ const FamousOpenings = () => {
                             </CardContent>
                             <CardFooter>
                                 <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" variant="secondary">
-                                    {progress > 0 ? 'Continue Learning' : 'Start Learning'}
+                                    {progress >= opening.totalLines ? 'Review Completed Course' : progress > 0 ? 'Continue Learning' : 'Start Learning'}
                                 </Button>
                             </CardFooter>
                         </Card>

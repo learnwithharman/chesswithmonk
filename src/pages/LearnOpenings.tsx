@@ -265,179 +265,214 @@ const LearnOpenings = () => {
     if (!variation) return <div className="p-8 text-center">Loading variation...</div>;
 
     return (
-        <div className="container mx-auto px-4 py-8 h-[calc(100vh-80px)] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/openings')}>
-                        <ChevronLeft className="w-6 h-6" />
+        <div className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_400px] gap-6 max-w-[1800px] mx-auto">
+                {/* Left Column - Controls/Modes (Matches Play's Left Sidebar area) */}
+                <div className="hidden lg:flex lg:flex-col gap-4">
+                    <Button variant="outline" className="justify-start" onClick={() => navigate('/openings')}>
+                        <ChevronLeft className="w-4 h-4 mr-2" />
+                        Back to Explorer
                     </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold flex items-center gap-2">
-                            <Trophy className="w-6 h-6 text-yellow-500" />
-                            {variation.name}
-                        </h1>
-                        <p className="text-muted-foreground font-mono text-sm">{variation.eco}</p>
-                    </div>
+
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Learning Mode</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-2">
+                            <Button
+                                variant={mode === 'learn' ? 'default' : 'ghost'}
+                                className="justify-start"
+                                onClick={() => handleModeChange('learn')}
+                            >
+                                <GraduationCap className="w-4 h-4 mr-2" /> Learn
+                            </Button>
+                            <Button
+                                variant={mode === 'practice' ? 'default' : 'ghost'}
+                                className="justify-start"
+                                onClick={() => handleModeChange('practice')}
+                            >
+                                <Dumbbell className="w-4 h-4 mr-2" /> Practice
+                            </Button>
+                            <Button
+                                variant={mode === 'drill' ? 'default' : 'ghost'}
+                                className="justify-start"
+                                onClick={() => handleModeChange('drill')}
+                            >
+                                <Zap className="w-4 h-4 mr-2" /> Drill
+                            </Button>
+                            <Button
+                                variant={mode === 'time' ? 'default' : 'ghost'}
+                                className="justify-start"
+                                onClick={() => handleModeChange('time')}
+                            >
+                                <Timer className="w-4 h-4 mr-2" /> Time Attack
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-2">
+                            <Button variant="outline" onClick={resetGame} className="justify-start">
+                                <RotateCcw className="w-4 h-4 mr-2" /> Restart
+                            </Button>
+                            {mode === 'learn' && (
+                                <div className="flex gap-2">
+                                    <Button variant="outline" onClick={stepBackward} disabled={currentMoveIndex === 0} className="flex-1">
+                                        <ChevronLeft className="w-4 h-4" /> Prev
+                                    </Button>
+                                    <Button variant="outline" onClick={stepForward} disabled={currentMoveIndex >= moveList.length} className="flex-1">
+                                        Next <ChevronLeft className="w-4 h-4 rotate-180" />
+                                    </Button>
+                                </div>
+                            )}
+                            {(mode === 'practice' || mode === 'drill') && (
+                                <Button variant="outline" onClick={showHint} className="justify-start">
+                                    <HelpCircle className="w-4 h-4 mr-2" /> Hint
+                                </Button>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
 
-                <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
-                    <Button
-                        variant={mode === 'learn' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleModeChange('learn')}
-                        className="gap-2"
-                    >
-                        <GraduationCap className="w-4 h-4" /> Learn
-                    </Button>
-                    <Button
-                        variant={mode === 'practice' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleModeChange('practice')}
-                        className="gap-2"
-                    >
-                        <Dumbbell className="w-4 h-4" /> Practice
-                    </Button>
-                    <Button
-                        variant={mode === 'drill' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleModeChange('drill')}
-                        className="gap-2"
-                    >
-                        <Zap className="w-4 h-4" /> Drill
-                    </Button>
-                    <Button
-                        variant={mode === 'time' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleModeChange('time')}
-                        className="gap-2"
-                    >
-                        <Timer className="w-4 h-4" /> Time
-                    </Button>
-                </div>
-            </div>
+                {/* Center Column - Board */}
+                <div className="space-y-4">
+                    <div className="w-full flex items-center justify-center">
+                        <div className="max-w-full max-h-[80vh] aspect-square relative">
+                            <ChessBoard
+                                chess={game}
+                                onMove={handleMove}
+                                flipped={false} // TODO: Support playing as Black
+                                lastMove={null}
+                                suggestions={[]}
+                                showSuggestions={false}
+                                hintMove={hintMove}
+                                wrongMove={wrongMove}
+                            />
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-6 flex-1 min-h-0">
-                {/* Board Area */}
-                <div className="flex flex-col items-center justify-center bg-card/50 rounded-xl p-4 border shadow-sm">
-                    <div className="w-full max-w-[600px] max-h-[80vh] aspect-square relative">
-                        <ChessBoard
-                            chess={game}
-                            onMove={handleMove}
-                            flipped={false} // TODO: Support playing as Black
-                            lastMove={null}
-                            suggestions={[]}
-                            showSuggestions={false}
-                            hintMove={hintMove}
-                            wrongMove={wrongMove}
-                        />
-
-                        {/* Feedback Overlay */}
-                        {feedback === 'wrong' && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 animate-in zoom-in duration-200">
-                                <div className="bg-red-500 text-white px-6 py-3 rounded-full font-bold shadow-xl flex items-center gap-2">
-                                    <XCircle className="w-6 h-6" />
-                                    Wrong Move
+                            {/* Feedback Overlay */}
+                            {feedback === 'wrong' && (
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 animate-in zoom-in duration-200">
+                                    <div className="bg-red-500 text-white px-6 py-3 rounded-full font-bold shadow-xl flex items-center gap-2">
+                                        <XCircle className="w-6 h-6" />
+                                        Wrong Move
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {feedback === 'correct' && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 animate-in zoom-in duration-200 pointer-events-none">
-                                <div className="bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-xl flex items-center gap-2">
-                                    <CheckCircle2 className="w-6 h-6" />
-                                    Correct!
+                            )}
+                            {feedback === 'correct' && (
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 animate-in zoom-in duration-200 pointer-events-none">
+                                    <div className="bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-xl flex items-center gap-2">
+                                        <CheckCircle2 className="w-6 h-6" />
+                                        Correct!
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
 
-                    {/* Controls */}
-                    <div className="mt-6 flex items-center gap-4">
-                        <Button variant="outline" onClick={resetGame}>
-                            <RotateCcw className="w-4 h-4 mr-2" /> Restart
-                        </Button>
-
+                    {/* Mobile Controls */}
+                    <div className="lg:hidden flex flex-col gap-4">
+                        <div className="flex items-center justify-between bg-card p-3 rounded-lg border">
+                            <Button variant="ghost" size="icon" onClick={() => navigate('/openings')}>
+                                <ChevronLeft className="w-6 h-6" />
+                            </Button>
+                            <div className="text-center">
+                                <h2 className="font-bold">{variation.name}</h2>
+                                <p className="text-xs text-muted-foreground">{variation.eco}</p>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={resetGame}>
+                                <RotateCcw className="w-5 h-5" />
+                            </Button>
+                        </div>
                         {mode === 'learn' && (
-                            <>
-                                <Button variant="outline" onClick={stepBackward} disabled={currentMoveIndex === 0}>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={stepBackward} disabled={currentMoveIndex === 0} className="flex-1">
                                     <ChevronLeft className="w-4 h-4" /> Prev
                                 </Button>
-                                <Button variant="outline" onClick={stepForward} disabled={currentMoveIndex >= moveList.length}>
-                                    Next <ChevronLeft className="w-4 h-4 rotate-180 ml-2" />
+                                <Button variant="outline" onClick={stepForward} disabled={currentMoveIndex >= moveList.length} className="flex-1">
+                                    Next <ChevronLeft className="w-4 h-4 rotate-180" />
                                 </Button>
-                            </>
-                        )}
-
-                        {(mode === 'practice' || mode === 'drill') && (
-                            <Button variant="outline" onClick={showHint}>
-                                <HelpCircle className="w-4 h-4 mr-2" /> Hint
-                            </Button>
+                            </div>
                         )}
                     </div>
                 </div>
 
-                {/* Info Panel */}
-                <Card className="h-full flex flex-col">
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            <span>Progress</span>
-                            {mode === 'time' && (
-                                <span className="font-mono text-xl text-primary">
-                                    {(elapsedTime / 1000).toFixed(1)}s
-                                </span>
-                            )}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span>Moves Completed</span>
-                                    <span className="font-bold">{currentMoveIndex} / {moveList.length}</span>
-                                </div>
-                                <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-primary transition-all duration-300"
-                                        style={{ width: `${(currentMoveIndex / Math.max(moveList.length, 1)) * 100}%` }}
-                                    />
-                                </div>
-                            </div>
+                {/* Right Column - Title & Progress */}
+                <div className="hidden lg:flex lg:flex-col gap-4">
+                    {/* Title Panel */}
+                    <div className="bg-card/50 backdrop-blur-sm p-4 rounded-lg border border-border text-center">
+                        <h2 className="text-xl font-bold text-foreground flex items-center justify-center gap-2">
+                            <Trophy className="w-5 h-5 text-yellow-500" />
+                            {variation.name}
+                        </h2>
+                        <p className="text-primary font-mono text-sm mt-1">{variation.eco}</p>
+                    </div>
 
-                            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                                <h3 className="font-semibold text-sm flex items-center gap-2">
-                                    <Lightbulb className="w-4 h-4 text-yellow-500" />
-                                    Current Goal
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                    {currentMoveIndex >= moveList.length
-                                        ? "Variation completed! Select another mode or opening."
-                                        : mode === 'learn'
-                                            ? "Study the moves and try to memorize the pattern."
-                                            : "Play the correct move from memory."
-                                    }
-                                </p>
-                            </div>
-
-                            {/* Move List */}
-                            <div className="flex flex-wrap gap-2 text-sm font-mono">
-                                {moveList.map((move, i) => (
-                                    <span
-                                        key={i}
-                                        className={`px-1.5 py-0.5 rounded ${i === currentMoveIndex - 1
-                                            ? "bg-primary text-primary-foreground font-bold"
-                                            : i < currentMoveIndex
-                                                ? "text-muted-foreground"
-                                                : "opacity-30"
-                                            }`}
-                                    >
-                                        {i % 2 === 0 && <span className="text-muted-foreground mr-1">{Math.floor(i / 2) + 1}.</span>}
-                                        {move}
+                    {/* Progress Panel */}
+                    <Card className="flex-1 flex flex-col">
+                        <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                                <span>Progress</span>
+                                {mode === 'time' && (
+                                    <span className="font-mono text-xl text-primary">
+                                        {(elapsedTime / 1000).toFixed(1)}s
                                     </span>
-                                ))}
+                                )}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-1">
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span>Moves Completed</span>
+                                        <span className="font-bold">{currentMoveIndex} / {moveList.length}</span>
+                                    </div>
+                                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-primary transition-all duration-300"
+                                            style={{ width: `${(currentMoveIndex / Math.max(moveList.length, 1)) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                                        <Lightbulb className="w-4 h-4 text-yellow-500" />
+                                        Current Goal
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {currentMoveIndex >= moveList.length
+                                            ? "Variation completed! Select another mode or opening."
+                                            : mode === 'learn'
+                                                ? "Study the moves and try to memorize the pattern."
+                                                : "Play the correct move from memory."
+                                        }
+                                    </p>
+                                </div>
+
+                                {/* Move List */}
+                                <div className="flex flex-wrap gap-2 text-sm font-mono">
+                                    {moveList.map((move, i) => (
+                                        <span
+                                            key={i}
+                                            className={`px-1.5 py-0.5 rounded ${i === currentMoveIndex - 1
+                                                ? "bg-primary text-primary-foreground font-bold"
+                                                : i < currentMoveIndex
+                                                    ? "text-muted-foreground"
+                                                    : "opacity-30"
+                                                }`}
+                                        >
+                                            {i % 2 === 0 && <span className="text-muted-foreground mr-1">{Math.floor(i / 2) + 1}.</span>}
+                                            {move}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

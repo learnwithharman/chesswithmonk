@@ -427,6 +427,15 @@ const Play = () => {
                             onMoveClick={handleMoveClick}
                         />
                     </div>
+
+                    {/* Opening Title Panel moved here */}
+                    <div className="bg-card/50 backdrop-blur-sm p-3 rounded-lg border border-border text-center shrink-0 my-2">
+                        <h2 className="text-lg font-semibold text-foreground">
+                            {ecoCode && <span className="text-primary mr-2 font-mono text-sm">{ecoCode}</span>}
+                            <span className="text-base">{openingName || "Unknown Opening"}</span>
+                        </h2>
+                    </div>
+
                     <div className="h-px bg-border my-2 shrink-0"></div>
                     <div className="h-[320px] shrink-0 min-h-0">
                         <SuggestionPanel
@@ -438,12 +447,6 @@ const Play = () => {
 
                 {/* Center Column - Board */}
                 <div className="space-y-4">
-                    <div className="bg-card/50 backdrop-blur-sm p-3 rounded-lg border border-border text-center">
-                        <h2 className="text-lg font-semibold text-foreground">
-                            {ecoCode && <span className="text-primary mr-2 font-mono text-sm">{ecoCode}</span>}
-                            <span className="text-base">{openingName || "Unknown Opening"}</span>
-                        </h2>
-                    </div>
                     <div className="w-full flex items-center justify-center">
                         <div className="max-w-full max-h-[80vh] aspect-square relative">
                             <EndGameBanner visible={!!gameResult} winner={gameResult} onRestart={handleNewGame} />
