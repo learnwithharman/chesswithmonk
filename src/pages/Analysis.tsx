@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Move } from '@/lib/types';
-import { RotateCcw, Download, Upload, Copy, Zap, Loader2 } from 'lucide-react';
+import { RotateCcw, Download, Upload, Copy, Zap, Undo, Redo, ChevronLeft, ChevronRight, FlipHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { identifyOpening, loadEcoTheory } from '@/lib/openingEngine';
 
@@ -39,6 +39,7 @@ const Analysis = () => {
 
     // UI / history state
     const [moveHistory, setMoveHistory] = useState<string[]>([]);
+    const [historyStack, setHistoryStack] = useState<string[]>([game.fen()]); // Store FENs
     const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
     const [moveQualities, setMoveQualities] = useState<Map<number, string>>(new Map());
 
@@ -80,7 +81,6 @@ const Analysis = () => {
                 setOpeningName('Starting Position');
                 setEcoCode(null);
             }
-            // Otherwise keep the last known opening
         }
     }, [fen]);
 
@@ -164,17 +164,69 @@ const Analysis = () => {
         try {
             const result = game.move(move);
             if (result) {
+                // If we moved from a previous state, truncate history
+                const newHistory = [...moveHistory.slice(0, currentMoveIndex + 1), result.san];
+                const newHistoryStack = [...historyStack.slice(0, currentMoveIndex + 1), game.fen()];
+
+                // Update state
                 const newGame = new Chess(game.fen());
+
                 setGame(newGame);
+                setMoveHistory(newHistory);
+                setHistoryStack([...newHistoryStack, newGame.fen()]);
+                setCurrentMoveIndex(newHistory.length - 1);
+
                 setLastMove(move);
                 setFen(newGame.fen());
                 setPgn(newGame.pgn());
-                const history = newGame.history();
-                setMoveHistory(history);
-                setCurrentMoveIndex(history.length - 1);
             }
         } catch {
             // invalid move – ignore
+        }
+    };
+
+    const handleUndo = () => {
+        if (currentMoveIndex >= 0) {
+            const newIndex = currentMoveIndex - 1;
+            const targetFen = historyStack[newIndex + 1]; // +1 because historyStack[0] is start pos
+
+            const newGame = new Chess(targetFen);
+            setGame(newGame);
+            setFen(newGame.fen());
+            setCurrentMoveIndex(newIndex);
+            setLastMove(null); // Clear last move highlight for now, or calculate it
+        }
+    };
+
+    const handleRedo = () => {
+        if (currentMoveIndex < moveHistory.length - 1) {
+            const newIndex = currentMoveIndex + 1;
+            const targetFen = historyStack[newIndex + 1 + 1]; // current is +1, next is +2
+
+            const newGame = new Chess(targetFen);
+            setGame(newGame);
+            setFen(newGame.fen());
+            setCurrentMoveIndex(newIndex);
+            // Highlight the move we just redid
+            // setLastMove(...) // Optional: parse history to find move
+        }
+    };
+
+    const handleMoveClick = (index: number) => {
+        if (index === -1) {
+            const startFen = historyStack[0];
+            const newGame = new Chess(startFen);
+            setGame(newGame);
+            setFen(startFen);
+            setCurrentMoveIndex(-1);
+            setLastMove(null);
+        } else {
+            const targetFen = historyStack[index + 1];
+            const newGame = new Chess(targetFen);
+            setGame(newGame);
+            setFen(targetFen);
+            setCurrentMoveIndex(index);
+            // Optionally set last move for highlighting
         }
     };
 
@@ -186,21 +238,37 @@ const Analysis = () => {
         setPgn(newGame.pgn());
         setEvalScore(0);
         setMoveHistory([]);
+        setHistoryStack([newGame.fen()]);
         setCurrentMoveIndex(-1);
         setMoveQualities(new Map());
         setOpeningName('Starting Position');
         setEcoCode(null);
         setEngineLines([]);
+        setIsRealTimeAnalysis(false);
     };
 
     const handlePgnImport = () => {
         try {
             const newGame = new Chess();
             newGame.loadPgn(pgn);
+            const history = newGame.history(); // San moves
+
+            // Rebuild history stack
+            const replayGame = new Chess();
+            const newStack = [replayGame.fen()];
+            history.forEach(m => {
+                replayGame.move(m);
+                newStack.push(replayGame.fen());
+            });
+
             setGame(newGame);
             setLastMove(null);
             setFen(newGame.fen());
             setPgn(newGame.pgn());
+            setMoveHistory(history);
+            setHistoryStack(newStack);
+            setCurrentMoveIndex(history.length - 1);
+
             toast({ title: 'PGN Loaded', description: 'Game loaded successfully.' });
         } catch {
             toast({ title: 'Invalid PGN', description: 'Could not load the game.', variant: 'destructive' });
@@ -213,8 +281,9 @@ const Analysis = () => {
             setGame(newGame);
             setLastMove(null);
             setPgn(newGame.pgn());
-            setMoveHistory(newGame.history());
-            setCurrentMoveIndex(newGame.history().length - 1);
+            setMoveHistory([]); // Clearing history for FEN import as we don't know past
+            setHistoryStack([newGame.fen()]);
+            setCurrentMoveIndex(-1);
             toast({ title: 'FEN Loaded', description: 'Position loaded successfully.' });
         } catch {
             toast({ title: 'Invalid FEN', description: 'Could not load the position.', variant: 'destructive' });
@@ -227,62 +296,91 @@ const Analysis = () => {
     };
 
     // Evaluation bar – normalize score to bar height (0-100%)
-    // Cap score at ±500 centipawns for visual scaling
-    // Positive score = White advantage (bar fills from bottom = black side)
-    // Negative score = Black advantage (bar fills from top = white side)
     const cappedScore = Math.max(-500, Math.min(500, evalScore));
     const evalBarHeight = Math.max(5, Math.min(95, 50 + (cappedScore / 500) * 45));
 
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_400px] gap-6 max-w-[1800px] mx-auto">
-                {/* Left – Move History */}
-                <div className="hidden lg:block">
-                    <MoveList
-                        moves={moveHistory}
-                        currentMoveIndex={currentMoveIndex}
-                        onMoveClick={(idx) => setCurrentMoveIndex(idx)}
-                        moveQualities={moveQualities}
-                    />
-                </div>
 
-                {/* Center – Board and evaluation */}
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center bg-card p-3 rounded-lg border">
-                        <div>
-                            <h2 className="text-lg font-bold">Analysis Board</h2>
-                            <p className="text-muted-foreground text-sm">
-                                {ecoCode && <span className="font-mono font-bold text-primary mr-2 text-xs">{ecoCode}</span>}
-                                <span className="text-xs">{openingName}</span>
-                            </p>
+                {/* LEFT COLUMN: History & Info */}
+                <div className="hidden lg:flex lg:flex-col h-[calc(100vh-200px)]">
+                    <div className="flex-1 min-h-0 bg-card rounded-lg border shadow-sm overflow-hidden flex flex-col">
+                        <div className="p-3 border-b font-semibold bg-muted/30">Move History</div>
+                        <div className="flex-1 overflow-auto">
+                            <MoveList
+                                moves={moveHistory}
+                                currentMoveIndex={currentMoveIndex}
+                                onMoveClick={handleMoveClick}
+                                moveQualities={moveQualities}
+                            />
                         </div>
-                        <Button variant="outline" size="sm" onClick={handleReset}>
-                            <RotateCcw className="mr-2 h-4 w-4" /> Reset
-                        </Button>
                     </div>
 
-                    <div className="flex gap-4 items-center justify-center h-[600px]">
-                        {/* Evaluation Bar */}
-                        <div className="w-8 bg-gray-300 rounded-sm relative overflow-hidden border h-full flex flex-col shrink-0">
-                            <div className="absolute top-0 w-full bg-white transition-all duration-500" style={{ height: `${evalBarHeight}%` }} />
-                            <div className="absolute bottom-0 w-full bg-gray-900 transition-all duration-500" style={{ height: `${100 - evalBarHeight}%` }} />
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className={`text-[10px] font-bold px-1 py-0.5 rounded ${mateIn !== null ? 'bg-yellow-500 text-black' : evalBarHeight > 50 ? 'bg-white text-black' : 'bg-gray-900 text-white'}`}>
-                                    {mateIn !== null ? `M${Math.abs(mateIn)}` : evalScore > 0 ? `+${(evalScore / 100).toFixed(1)}` : (evalScore / 100).toFixed(1)}
+                    {/* Opening Info */}
+                    <div className="bg-card/50 backdrop-blur-sm p-3 rounded-lg border border-border text-center shrink-0 my-4 shadow-sm">
+                        <h2 className="text-lg font-semibold text-foreground">
+                            {ecoCode && <span className="text-primary mr-2 font-mono text-sm">{ecoCode}</span>}
+                            <span className="text-base">{openingName}</span>
+                        </h2>
+                    </div>
+
+                    {/* Best Moves / Engine Lines */}
+                    <div className="h-[300px] shrink-0 min-h-0">
+                        <Card className="h-full flex flex-col">
+                            <CardHeader className="py-3 px-4">
+                                <CardTitle className="text-sm">Best Moves</CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex-1 overflow-auto p-4 pt-0">
+                                <div className="space-y-1.5">
+                                    {engineLines.slice(0, multiPV).map((line, i) => (
+                                        <div key={i} className="flex justify-between items-center text-xs p-2 bg-muted/50 rounded hover:bg-muted transition-colors cursor-pointer">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-muted-foreground font-mono w-4">{i + 1}.</span>
+                                                <span className="font-mono font-bold">{line.move.san}</span>
+                                            </div>
+                                            <span className={line.score > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                                                {line.score > 0 ? '+' : ''}{(line.score / 100).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {engineLines.length === 0 && (
+                                        <div className="text-center text-muted-foreground text-xs py-8 opacity-50">
+                                            {isComputing ? 'Calculating...' : 'Start analysis to see moves'}
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+
+                {/* CENTER COLUMN: Board */}
+                <div className="space-y-4">
+                    <div className="w-full flex items-center justify-center">
+                        <div className="max-w-full max-h-[80vh] aspect-square relative flex gap-4">
+                            {/* Evaluation Bar */}
+                            <div className="w-6 lg:w-8 bg-gray-300 rounded-sm relative overflow-hidden border h-full flex flex-col shrink-0 shadow-inner">
+                                <div className="absolute top-0 w-full bg-white transition-all duration-500" style={{ height: `${evalBarHeight}%` }} />
+                                <div className="absolute bottom-0 w-full bg-gray-900 transition-all duration-500" style={{ height: `${100 - evalBarHeight}%` }} />
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className={`text-[10px] font-bold px-1 py-0.5 rounded shadow-sm ${mateIn !== null ? 'bg-yellow-500 text-black' : evalBarHeight > 50 ? 'bg-white/90 text-black' : 'bg-gray-900/90 text-white'}`}>
+                                        {mateIn !== null ? `M${Math.abs(mateIn)}` : evalScore > 0 ? `+${(evalScore / 100).toFixed(1)}` : (evalScore / 100).toFixed(1)}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Board Container - let it fill remaining space but keep aspect ratio */}
-                        <div className="h-full aspect-square">
-                            <ChessBoard
-                                chess={game}
-                                onMove={onMove}
-                                flipped={flipped}
-                                lastMove={lastMove}
-                                suggestions={[]}
-                                showSuggestions={false}
-                            />
+                            {/* Board Container */}
+                            <div className="h-full aspect-square relative shadow-2xl rounded-lg overflow-hidden flex-1">
+                                <ChessBoard
+                                    chess={game}
+                                    onMove={onMove}
+                                    flipped={flipped}
+                                    lastMove={lastMove}
+                                    suggestions={[]}
+                                    showSuggestions={false}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -291,79 +389,92 @@ const Analysis = () => {
                         <MoveList
                             moves={moveHistory}
                             currentMoveIndex={currentMoveIndex}
-                            onMoveClick={(idx) => setCurrentMoveIndex(idx)}
+                            onMoveClick={handleMoveClick}
                             moveQualities={moveQualities}
                         />
                     </div>
                 </div>
 
-                {/* Right – Settings and best moves */}
-                <div className="space-y-6">
+                {/* RIGHT COLUMN: Controls */}
+                <div className="hidden lg:block space-y-6">
+                    {/* Game Actions */}
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Engine Settings</CardTitle>
+                        <CardHeader className="py-3">
+                            <CardTitle className="text-base">Game Controls</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-2 gap-2">
+                            <Button variant="outline" onClick={() => setFlipped(!flipped)} title="Flip Board">
+                                <FlipHorizontal className="w-4 h-4 mr-2" /> Flip
+                            </Button>
+                            <Button variant="outline" onClick={handleReset} title="Reset Board">
+                                <RotateCcw className="w-4 h-4 mr-2 text-red-500" /> Reset
+                            </Button>
+                            <div className="col-span-2 grid grid-cols-2 gap-2 mt-2">
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleUndo}
+                                    disabled={currentMoveIndex < 0}
+                                    title="Undo Move"
+                                >
+                                    <ChevronLeft className="w-4 h-4 mr-1" /> Undo
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleRedo}
+                                    disabled={currentMoveIndex >= moveHistory.length - 1}
+                                    title="Redo Move"
+                                >
+                                    Redo <ChevronRight className="w-4 h-4 ml-1" />
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Engine Settings */}
+                    <Card>
+                        <CardHeader className="py-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-base">Engine Settings</CardTitle>
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">Stockfish 17.1</span>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <label className="text-sm font-medium">Engine</label>
-                                    <span className="text-xs text-muted-foreground">Stockfish 17.1</span>
-                                </div>
-                            </div>
-
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <label className="text-sm font-medium">Depth</label>
                                     <span className="text-xs text-muted-foreground">{engineDepth}</span>
                                 </div>
-                                <Slider value={[engineDepth]} onValueChange={([v]) => setEngineDepth(v)} min={5} max={17} step={1} className="w-full" />
+                                <Slider value={[engineDepth]} onValueChange={([v]) => setEngineDepth(v)} min={5} max={25} step={1} className="w-full" />
                             </div>
 
-                            {/* Threads Slider */}
                             <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-sm font-medium flex items-center gap-1">
-                                        Threads
-                                        <span className="text-[10px] text-muted-foreground ml-1" title="How many CPU threads the engine uses. Higher = faster but heavier for your device.">ⓘ</span>
-                                    </label>
-                                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full">Threads: {threads}</span>
+                                <div className="flex justify-between">
+                                    <label className="text-sm font-medium">Threads</label>
+                                    <span className="text-xs text-muted-foreground">{threads}</span>
                                 </div>
                                 <Slider value={[threads]} onValueChange={([v]) => setThreads(v)} min={1} max={16} step={1} className="w-full" />
                             </div>
 
-                            {/* Hash Slider */}
                             <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-sm font-medium flex items-center gap-1">
-                                        Hash
-                                        <span className="text-[10px] text-muted-foreground ml-1" title="How much RAM the engine can use for transposition tables. More = stronger, but may slow low-end devices.">ⓘ</span>
-                                    </label>
-                                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full">Hash: {hash} MB</span>
+                                <div className="flex justify-between">
+                                    <label className="text-sm font-medium">Hash (MB)</label>
+                                    <span className="text-xs text-muted-foreground">{hash}</span>
                                 </div>
                                 <Slider value={[hash]} onValueChange={([v]) => setHash(v)} min={16} max={1024} step={16} className="w-full" />
                             </div>
 
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <label className="text-sm font-medium">Multiple Lines</label>
+                                    <label className="text-sm font-medium">Multi PV</label>
                                     <span className="text-xs text-muted-foreground">{multiPV}</span>
                                 </div>
                                 <Slider value={[multiPV]} onValueChange={([v]) => setMultiPV(v)} min={1} max={5} step={1} className="w-full" />
                             </div>
 
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <label className="text-sm font-medium">Search Time</label>
-                                    <span className="text-xs text-muted-foreground">{searchTime}s</span>
-                                </div>
-                                <Slider value={[searchTime]} onValueChange={([v]) => setSearchTime(v)} min={1} max={10} step={1} className="w-full" />
-                            </div>
-
-                            {/* Analyze button */}
                             <Button
                                 onClick={toggleAnalysis}
                                 variant={isRealTimeAnalysis ? "destructive" : "default"}
-                                className="w-full"
+                                className="w-full mt-2"
                                 size="lg"
                             >
                                 {isRealTimeAnalysis ? (
@@ -372,40 +483,17 @@ const Analysis = () => {
                                     </>
                                 ) : (
                                     <>
-                                        <Zap className="w-4 h-4 mr-2" /> Analyze Position
+                                        <Zap className="w-4 h-4 mr-2" /> Start Analysis
                                     </>
                                 )}
                             </Button>
                         </CardContent>
                     </Card>
 
+                    {/* FEN & PGN */}
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm">Best Moves</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-1.5">
-                                {engineLines.slice(0, multiPV).map((line, i) => (
-                                    <div key={i} className="flex justify-between items-center text-xs p-1.5 bg-muted/50 rounded">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-muted-foreground font-mono w-4">{i + 1}.</span>
-                                            <span className="font-mono font-bold">{line.move.san}</span>
-                                        </div>
-                                        <span className={line.score > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
-                                            {line.score > 0 ? '+' : ''}{(line.score / 100).toFixed(2)}
-                                        </span>
-                                    </div>
-                                ))}
-                                {engineLines.length === 0 && (
-                                    <div className="text-center text-muted-foreground text-xs py-4">Calculating...</div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>FEN & PGN</CardTitle>
+                        <CardHeader className="py-3">
+                            <CardTitle className="text-base">FEN & PGN</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
@@ -426,7 +514,6 @@ const Analysis = () => {
                                     <div className="flex flex-col gap-1">
                                         <Button size="icon" variant="outline" className="h-9 w-9" onClick={handlePgnImport} title="Load PGN"><Upload className="h-4 w-4" /></Button>
                                         <Button size="icon" variant="outline" className="h-9 w-9" onClick={() => copyToClipboard(pgn)} title="Copy PGN"><Copy className="h-4 w-4" /></Button>
-                                        <Button size="icon" variant="outline" className="h-9 w-9" title="Download PGN"><Download className="h-4 w-4" /></Button>
                                     </div>
                                 </div>
                             </div>
