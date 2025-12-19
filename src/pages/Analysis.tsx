@@ -384,14 +384,49 @@ const Analysis = () => {
                         </div>
                     </div>
 
-                    {/* Mobile move list */}
-                    <div className="lg:hidden">
+                    {/* Mobile Layout: Move List & Controls */}
+                    <div className="lg:hidden space-y-4">
                         <MoveList
                             moves={moveHistory}
                             currentMoveIndex={currentMoveIndex}
                             onMoveClick={handleMoveClick}
                             moveQualities={moveQualities}
                         />
+
+                        {/* Mobile Controls */}
+                        <div className="space-y-2">
+                            <div className="grid grid-cols-4 gap-2">
+                                <Button variant="outline" size="sm" onClick={() => setFlipped(!flipped)} title="Flip">
+                                    <FlipHorizontal className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handleReset} title="Reset">
+                                    <RotateCcw className="h-4 w-4 text-red-500" />
+                                </Button>
+                                <Button variant="secondary" size="sm" onClick={handleUndo} disabled={currentMoveIndex < 0} title="Undo">
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="secondary" size="sm" onClick={handleRedo} disabled={currentMoveIndex >= moveHistory.length - 1} title="Redo">
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+
+                            <Button
+                                onClick={toggleAnalysis}
+                                variant={isRealTimeAnalysis ? "destructive" : "default"}
+                                className="w-full"
+                                size="sm"
+                            >
+                                {isRealTimeAnalysis ? (
+                                    <>
+                                        <Zap className="w-4 h-4 mr-2" /> Stop Analysis
+                                    </>
+                                ) : (
+                                    <>
+                                        <Zap className="w-4 h-4 mr-2" /> Start Analysis
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </div>
                 </div>
 

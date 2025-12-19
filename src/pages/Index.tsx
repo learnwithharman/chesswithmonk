@@ -19,41 +19,41 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <section className="flex-1 flex flex-col justify-center items-center text-center px-4 py-20 bg-gradient-to-b from-background via-muted/10 to-background relative overflow-hidden">
+      <section className="flex-1 flex flex-col justify-center items-center text-center px-4 py-16 md:py-20 bg-gradient-to-b from-background via-muted/10 to-background relative overflow-hidden">
         {/* Animated background */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse delay-700" />
+          <div className="absolute top-20 left-10 w-40 md:w-72 h-40 md:h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 right-10 w-56 md:w-96 h-56 md:h-96 bg-primary/5 rounded-full blur-3xl animate-pulse delay-700" />
         </div>
 
-        <div className="max-w-4xl space-y-8 animate-in fade-in duration-1000">
-          <div className="flex justify-center mb-8">
-            <div className="w-32 h-32 bg-primary/10 rounded-full flex items-center justify-center ring-8 ring-primary/5 animate-in zoom-in duration-500">
-              <Logo className="w-20 h-20 text-primary animate-glow" />
+        <div className="max-w-4xl space-y-6 md:space-y-8 animate-in fade-in duration-1000">
+          <div className="flex justify-center mb-6 md:mb-8">
+            <div className="w-24 h-24 md:w-32 md:h-32 bg-primary/10 rounded-full flex items-center justify-center ring-4 md:ring-8 ring-primary/5 animate-in zoom-in duration-500">
+              <Logo className="w-12 h-12 md:w-20 md:h-20 text-primary animate-glow" />
             </div>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight animate-in slide-in-from-bottom duration-700">
-            Master Chess with <span className="text-primary bg-clip-text">MonkChess</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight animate-in slide-in-from-bottom duration-700 px-2">
+            Master Chess with <span className="text-primary bg-clip-text block sm:inline">MonkChess</span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in slide-in-from-bottom duration-700 delay-150">
+          <p className="text-base sm:text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in slide-in-from-bottom duration-700 delay-150 px-2">
             Powered by <span className="font-semibold text-foreground">Stockfish 17</span>, the world's strongest chess engine.
             Analyze positions, practice against AI, solve puzzles, and master famous openings.
             Your journey to chess mastery starts here.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-in slide-in-from-bottom duration-700 delay-300">
-            <Link to="/play">
-              <Button size="lg" className="text-lg px-8 py-6 gap-2 shadow-lg hover:shadow-2xl hover:scale-105 transition-all group">
-                <Swords className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 md:pt-8 animate-in slide-in-from-bottom duration-700 delay-300 w-full sm:w-auto px-4 sm:px-0">
+            <Link to="/play" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto text-base md:text-lg px-8 py-6 gap-2 shadow-lg hover:shadow-2xl hover:scale-105 transition-all group">
+                <Swords className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform" />
                 Play Now
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="/openings">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6 gap-2 hover:scale-105 transition-all group">
-                <BookOpen className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            <Link to="/openings" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto text-base md:text-lg px-8 py-6 gap-2 hover:scale-105 transition-all group">
+                <BookOpen className="w-5 h-5 md:w-6 md:h-6 group-hover:scale-110 transition-transform" />
                 Explore Openings
               </Button>
             </Link>
