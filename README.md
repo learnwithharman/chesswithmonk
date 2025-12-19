@@ -1,127 +1,95 @@
-# MonkChess — A Modern, Interactive Chess Platform
+# ♟️ MonkChess — A Modern, Interactive Chess Platform
 
-MonkChess is a high-performance, full-featured chess application built to **play**, **learn**, and **analyze** chess at a professional level.  
+![MonkChess Logo](public/logo/edumonk.svg)
+
+<div align="center">
+
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Click_Here-success?style=for-the-badge&logo=vercel)](https://chesswithmonkk.vercel.app/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Stockfish](https://img.shields.io/badge/Stockfish_17-FFA500?style=for-the-badge&logo=lichess&logoColor=white)](https://stockfishchess.org/)
+
+</div>
+
+---
+
+## 🚀 **Live Demo**
+👉 **Play Now:** [https://chesswithmonkk.vercel.app/](https://chesswithmonkk.vercel.app/)
+
+---
+
+## 📖 **Overview**
+**MonkChess** is a high-performance, full-featured chess application built to **play**, **learn**, and **analyze** chess at a professional level.  
 It combines a beautiful modern UI with powerful engine-driven insights — perfect for both beginners and advanced players.
 
----
-
-# Features
-
-## Play Mode
-- Play full classical chess against **Stockfish 17.1**.
-- Smooth piece animations and responsive board interactions.
-- Undo / Redo, board flip, hints, and keyboard shortcuts.
-- Mobile-friendly gameplay.
+Whether you want to challenge Stockfish 17, analyze your games with professional-grade evaluation, or master famous openings, MonkChess has you covered.
 
 ---
 
-## Analysis Mode (Engine Powered)
-- Real-time analysis using **Stockfish 17.1 (WASM)**.
-- Eval bar, best move suggestions, and multi-line evaluation.
-- Automatic move classifications:
-  - **Brilliant (!!)**
-  - **Excellent (!)** 
-  - **Good**
-  - **Inaccuracy (!?)**
-  - **Mistake (?)**
-  - **Blunder (??)**
-- On-board notation icons just like lichess/chess.com.
-- Automatic PGN generation with:
-  - Current date
-  - Site = "ChessWithMonk"
-  - Final result
-- PGN import/export support.
+## ✨ **Key Features**
+
+### 🎮 **Play Mode**
+- **Strongest AI**: Play against **Stockfish 17.1 (WebAssembly)** directly in your browser.
+- **Adjustable Difficulty**: From Beginner (~800 ELO) to Grandmaster (~3000+ ELO).
+- **Smooth Gameplay**: Responsive board, drag-and-drop, and click-to-move support.
+- **Game Controls**: Undo, Redo, Flip Board, Hint System.
+
+### 🔍 **Analysis Mode (Pro)**
+- **Real-Time Evaluation**: See the evaluation bar and centipawn score instantly.
+- **Move Classification**:
+  - 🏆 **Brilliant (!!)**
+  - ✨ **Great (!)**
+  - ✅ **Good**
+  - ⚠️ **Inaccuracy (!?)**
+  - ❌ **Mistake (?)**
+  - 💀 **Blunder (??)**
+- **Multi-PV Support**: See up to 5 best engine lines simultaneously.
+- **PGN Export**: Auto-generate PGNs with site metadata and game results.
+
+### 📚 **Openings Trainer**
+- **Curated Library**: Explore a collection of famous openings and variations.
+- **Top Sequences**: Learn historical openings like the *King's Indian Defense*, *Ruy Lopez*, or *Sicilian Dragon*.
+- **Interactive Drill Mode**: The AI plays the opponent's moves automatically, helping you memorize lines.
+
+### 🧩 **Puzzles & Tactics**
+- **Tactical Training**: Sharpen your vision with a collection of challenging puzzles.
+- **Difficulty Levels**: Easy (Mate in 1), Medium (Mate in 2), Hard (Mate in 5+).
+- **Hints & Solutions**: Get visual cues if you're stuck.
+
+### 📱 **Fully Responsive (Mobile First)**
+- **Mobile Optimized**: Custom layouts for iPhone/Android.
+- **Touch Friendly**: Optimized board sizing and touch controls.
+- **PWA Ready**: designed to feel like a native app.
 
 ---
 
-## Openings Trainer (ALL Openings + Famous Lines)
-- Complete openings explorer with structured lines and explanations.
-- Two training categories:
-  - **Famous Openings**
-  - **All Openings**
-- Learn Mode:
-  - User plays their side.
-  - Opponent moves auto-play from the line (lichess-style).
-  - Progress tracking and correctness feedback.
-- Clear instructional text showing ideas, plans, and motifs.
+## 🛠 **Technology Stack**
+
+| Layer | Technologies |
+|-------|--------------|
+| **Frontend** | React, Vite, TypeScript |
+| **Styling** | Tailwind CSS, Shadcn UI, Lucide Icons |
+| **Chess Logic** | Chess.js, React-Chessboard |
+| **Engine** | Stockfish 17.1 (WASM), Web Workers |
+| **State** | React Hooks, Context API |
+| **Deployment** | Vercel |
 
 ---
 
-## Puzzles Mode
-- Multiple-move puzzles with visual cues.
-- **Three difficulties**:
-  - Beginner
-  - Intermediate
-  - Advanced
-- Instant feedback, hints, and solution lines.
+## 📸 **Screenshots**
+
+| Play Mode | Analysis Mode |
+|-----------|---------------|
+| *Classic board with controls* | *Deep engine evaluation with graphs* |
+
+| Openings | Mobile View |
+|----------|-------------|
+| *Explore thousands of variations* | *Perfectly optimized for phones* |
 
 ---
 
-## Modern UI / UX
-- Built with **shadcn-ui** and **Tailwind CSS**.
-- Dark, polished, professional styling.
-- Fully responsive for all screen sizes.
-- Smooth transitions & clear layout separation (Play, Openings, Learn, Puzzles, Analysis).
-
----
-
-# 🛠 Tech Stack
-
-### Frontend
--  **React + Vite**
--  **TypeScript**
--  **Tailwind CSS** + **shadcn-ui**
--  **react-chessboard** (board display)
--  **chess.js** (game logic)
-
-### Engine
-- 🔥 **Stockfish 17.1 (WebAssembly)**  
-  - Multi-thread support  
-  - Adjustable depth  
-  - No backend required
-
-### Utilities
-- Custom PGN generator and parser  
-- Auto-move opening training logic  
-- Worker-based engine evaluation  
-- File import/export system
-
----
-
-#  Why This Project Is Impressive (For Recruiters)
-
-### ⭐ Advanced Concepts Implemented
-- Integrated in-browser Stockfish 17.1 engine.
-- Full analysis pipeline including:
-  - CP evaluation delta
-  - Move scoring (blunder, brilliant, etc.)
-  - In-board annotations  
-- Functional Opening Trainer system.
-
-### ⭐ Strong UI Engineering
-- Tailwind + shadcn component architecture.
-- Optimized rendering and responsive design.
-- Smooth UX similar to lichess/chess.com.
-
-### ⭐ Scalable Architecture
-- Modular React components.
-- Clean separation between:
-  - Engine worker  
-  - Board state  
-  - PGN logic  
-  - UI logic  
-- Easily extendable to online multiplayer / backend services.
-
-### ⭐ Production-grade Polish
-- Auto-generated PGN metadata.
-- Advanced puzzle logic.
-- Auto-play opening lines.
-- Error handling and engine fallback.
-
-STAY IN TOUCH WITH CHESSWITHMONK or Follow me on ig @cozy.monkk for more info I'll update you with my project
----
-
-# 📦 Getting Started
+## 🏎️ **Getting Started**
 
 To run this project locally:
 
@@ -144,3 +112,18 @@ To run this project locally:
     ```sh
     npm run dev
     ```
+
+---
+
+## 🤝 **Connect & Contributing**
+
+**Author:** Harman  
+**Instagram:** [@cozy.monkk](https://instagram.com/cozy.monkk)  
+
+Feel free to fork this repository and submit pull requests. Any contributions to improve the engine integration or UI are welcome!
+
+---
+
+<div align="center">
+  <p>Made with ❤️ by MonkChess Team</p>
+</div>
