@@ -202,6 +202,7 @@ export const ChessBoard = memo(function ChessBoard({
     window.addEventListener('mouseleave', resetDragState);
     window.addEventListener('touchmove', handleMouseMove, { passive: false });
     window.addEventListener('touchend', handleMouseUp);
+    window.addEventListener('touchcancel', resetDragState);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -209,6 +210,7 @@ export const ChessBoard = memo(function ChessBoard({
       window.removeEventListener('mouseleave', resetDragState);
       window.removeEventListener('touchmove', handleMouseMove);
       window.removeEventListener('touchend', handleMouseUp);
+      window.removeEventListener('touchcancel', resetDragState);
     };
   }, [draggingPiece, legalMoves, snapToSquare, onMove, getSquareCenter, squareSize, dragX, dragY, dragTargetSquare]);
 

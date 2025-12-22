@@ -557,26 +557,40 @@ const Analysis = () => {
                 </div>
 
                 {/* CENTER: Board */}
-                <div className="space-y-4">
+                <div className="space-y-4 w-full max-w-xl mx-auto lg:max-w-none">
                     <div className="w-full flex items-center justify-center">
-                        <div className="max-w-full max-h-[80vh] aspect-square relative flex gap-4">
+                        <div className="w-full max-w-full aspect-square relative flex gap-2 md:gap-4 lg:max-h-[80vh] shrink-0">
                             <EvaluationBar
                                 evaluation={currentEvaluation}
                                 mateIn={mateIn}
                                 isSmoothing={true}
                                 perspective="w"
-                                className="w-8 h-full"
+                                className="w-4 md:w-6 lg:w-8 h-full shrink-0"
                             />
 
                             <div className="h-full aspect-square relative shadow-2xl rounded-lg overflow-hidden flex-1">
                                 <ChessBoard
                                     chess={game}
-                                    onMove={() => { }}
+                                    onMove={(move) => {
+                                        const newGame = new Chess(game.fen());
+                                        try {
+                                            const result = newGame.move(move);
+                                            if (result) {
+                                                setGame(newGame);
+                                                setFen(newGame.fen());
+                                                setLastMove({ from: move.from, to: move.to });
+                                                // Trigger analysis for new position...
+                                                analyzePosition(newGame.fen()).then((res) => {
+                                                    setTargetEvaluation(res.evaluation); // Need logic
+                                                });
+                                            }
+                                        } catch (e) { console.error(e); }
+                                    }}
                                     flipped={flipped}
                                     lastMove={lastMove}
                                     suggestions={[]}
                                     showSuggestions={false}
-                                    isDraggable={false}
+                                    isDraggable={true}
                                 />
                             </div>
                         </div>
@@ -606,6 +620,18 @@ const Analysis = () => {
                                 Next <ChevronRight className="w-4 h-4 ml-2" />
                             </Button>
                         </div>
+                    </div>
+
+                    {/* Mobile Move Feedback Panel */}
+                    <div className="lg:hidden w-full mt-4">
+                        <MoveFeedbackPanel
+                            moveQuality={currentFeedback.quality}
+                            evaluationDelta={currentFeedback.evaluationDelta}
+                            contextualLabels={currentFeedback.contextualLabels}
+                            currentMove={currentFeedback.move}
+                            engineLines={engineLines}
+                            multiPV={3}
+                        />
                     </div>
                 </div>
 
