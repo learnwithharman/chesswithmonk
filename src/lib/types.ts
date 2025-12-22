@@ -36,3 +36,49 @@ export interface GameState {
   whiteTime: number;
   blackTime: number;
 }
+
+// New types for analysis engine
+export type MoveQualityLabel =
+  | 'Brilliant'
+  | 'Great'
+  | 'Excellent'
+  | 'Best'
+  | 'Good'
+  | 'Inaccuracy'
+  | 'Mistake'
+  | 'Blunder'
+  | 'Book Move'
+  | 'Forced Move'
+  | 'Missed Win'
+  | 'Missed Draw';
+
+export interface MoveQuality {
+  label: MoveQualityLabel;
+  evaluationDelta: number;
+  contextualLabels: MoveQualityLabel[];
+}
+
+export interface PVLine {
+  pvIndex: number; // 0, 1, 2 for MultiPV=3
+  moves: Move[]; // Full PV line
+  evaluation: number; // Normalized
+  depth: number;
+  mate: number | null;
+  uciMove?: string; // First move in UCI format
+}
+
+export interface EngineUpdate {
+  depth: number;
+  multiPV: number;
+  lines: PVLine[];
+  bestLine: PVLine | null;
+  mate: number | null;
+}
+
+export interface EvaluationState {
+  current: number;
+  target: number;
+  interpolating: boolean;
+  lastDepth: number;
+}
+

@@ -139,6 +139,9 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
 
     return new Promise((resolve) => {
         const suggestions: any[] = [];
+        let currentDepth = 0;
+        let mateDetected: number | null = null;
+
         const timeout = setTimeout(() => {
             console.log('[Stockfish Worker] ⏱️ Timeout, returning', suggestions.length, 'suggestions');
             resolve(suggestions.slice(0, multiPV));
@@ -147,19 +150,31 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
         const messageHandler = (event: MessageEvent) => {
             const message = event.data;
 
+            // Parse depth
+            const depthMatch = message.match(/depth\s+(\d+)/);
+            if (depthMatch) {
+                currentDepth = parseInt(depthMatch[1]);
+            }
+
+            // Parse mate score - format: "score mate 5" or "score mate -3"
+            const mateMatch = message.match(/score mate\s+(-?\d+)/);
+            if (mateMatch) {
+                mateDetected = parseInt(mateMatch[1]);
+            }
+
             // Parse MultiPV lines - format: "info depth 10 multipv 1 score cp 25 pv e2e4 e7e5"
             if (message.includes('multipv') && message.includes('pv')) {
                 const pvMatch = message.match(/multipv\s+(\d+)/);
                 const scoreMatch = message.match(/score cp\s+(-?\d+)/);
                 const pvMovesMatch = message.match(/pv\s+([a-h][1-8][a-h][1-8][qrbn]?(?:\s+[a-h][1-8][a-h][1-8][qrbn]?)*)/);
 
-                if (pvMatch && scoreMatch && pvMovesMatch) {
+                if (pvMatch && (scoreMatch || mateMatch) && pvMovesMatch) {
                     const pvNum = parseInt(pvMatch[1]);
-                    const score = parseInt(scoreMatch[1]);
+                    const score = scoreMatch ? parseInt(scoreMatch[1]) : (mateDetected! > 0 ? 100000 : -100000);
                     const moves = pvMovesMatch[1].split(' ');
                     const firstMove = moves[0]; // Get the first move in UCI format (e.g., "e2e4")
 
-                    console.log('[Stockfish Worker] 📊 Parsed line PV', pvNum, ':', firstMove, 'score:', score);
+                    console.log('[Stockfish Worker] 📊 Parsed line PV', pvNum, ':', firstMove, 'score:', score, 'depth:', currentDepth);
 
                     if (firstMove && firstMove.length >= 4) {
                         const existingIndex = suggestions.findIndex(s => s.pvNum === pvNum);
@@ -173,10 +188,16 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
                             score,
                             cpLoss: 0,
                             classification: '✓',
+                            depth: currentDepth,
+                            uciMove: firstMove,
+                            mate: mateDetected,
                         };
 
                         if (existingIndex >= 0) {
-                            suggestions[existingIndex] = suggestion;
+                            // Only update if depth is higher
+                            if (currentDepth >= suggestions[existingIndex].depth) {
+                                suggestions[existingIndex] = suggestion;
+                            }
                         } else {
                             suggestions.push(suggestion);
                         }
