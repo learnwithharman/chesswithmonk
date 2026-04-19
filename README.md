@@ -120,6 +120,7 @@ To run this project locally:
 **Author:** Harman  
 **Instagram:** [@ded.lecter](https://www.instagram.com/ded.lecter/?hl=en)  
 **GitHub:** [learnwithharman](https://github.com/learnwithharman)  
+**LinkedIn:** [Harman](https://www.linkedin.com/in/harman-068394327?utm_source=share_via&utm_content=profile&utm_medium=member_android)  
 
 Feel free to fork this repository and submit pull requests. Any contributions to improve the engine integration or UI are welcome!
 
