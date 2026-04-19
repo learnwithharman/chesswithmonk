@@ -323,10 +323,10 @@ const Index = () => {
       <footer className="py-12 bg-muted/30 border-t border-border">
         <div className="container mx-auto px-4 text-center">
           <div className="flex justify-center gap-6 mb-8">
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
+            <a href="https://www.instagram.com/ded.lecter/?hl=en" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
               <Instagram className="w-5 h-5" />
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
+            <a href="https://github.com/learnwithharman" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
               <Github className="w-5 h-5" />
             </a>
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
