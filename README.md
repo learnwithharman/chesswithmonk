@@ -118,7 +118,8 @@ To run this project locally:
 ## 🤝 **Connect & Contributing**
 
 **Author:** Harman  
-**Instagram:** [@cozy.monkk](https://instagram.com/cozy.monkk)  
+**Instagram:** [@ded.lecter](https://www.instagram.com/ded.lecter/?hl=en)  
+**GitHub:** [learnwithharman](https://github.com/learnwithharman)  
 
 Feel free to fork this repository and submit pull requests. Any contributions to improve the engine integration or UI are welcome!
 
