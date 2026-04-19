@@ -329,7 +329,7 @@ const Index = () => {
             <a href="https://github.com/learnwithharman" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
               <Github className="w-5 h-5" />
             </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
+            <a href="https://www.linkedin.com/in/harman-068394327?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
               <Linkedin className="w-5 h-5" />
             </a>
             <a href="mailto:v1ntage.monk69@gmail.com" className="p-2 rounded-full bg-background border hover:bg-muted hover:scale-110 transition-all">
