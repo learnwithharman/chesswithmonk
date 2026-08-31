@@ -1,6 +1,6 @@
 # ♟️ MonkChess — A Modern, Interactive Chess Platform
 
-![MonkChess Logo](public/logo/edumonk.svg)
+![MonkChess Logo](public/logo/Chess_slt45.svg)
 
 <div align="center">
 
@@ -20,23 +20,33 @@
 ---
 
 ## 📖 **Overview**
-**MonkChess** is a high-performance, full-featured chess application built to **play**, **learn**, and **analyze** chess at a professional level.  
-It combines a beautiful modern UI with powerful engine-driven insights — perfect for both beginners and advanced players.
+**MonkChess** is a high-performance, professional chess application designed for playing, analyzing, and mastering chess. It combines a sleek **obsidian black & dark espresso brown theme** with signature purple accents (`#9d4edd`), crisp piece movement animations, and powerful engine insights.
 
-Whether you want to challenge Stockfish 17, analyze your games with professional-grade evaluation, or master famous openings, MonkChess has you covered.
+Whether you want to challenge Stockfish 17, explore 10,000+ ECO openings, solve puzzles, or perform deep position analysis, MonkChess delivers a modern, desktop-grade chess experience.
 
 ---
 
 ## ✨ **Key Features**
 
+### 🎨 **Modern Interactive Design & Theme**
+- **Sleek Dark Theme**: Obsidian black (`#101014`) and dark espresso brown (`#1f1a17`) palette with purple accent lighting.
+- **`ShapeGrid` Canvas Background**: Custom HTML5 canvas grid with subtle upward scrolling square tiles and cursor hover glow trails.
+- **`ParticleText` Interactive Headline**: Dynamic headline particle text with particle gather animations, mouse repulsion, and glow effects.
+- **Crisp Piece Motion**: 180ms ease-out translational piece glide animations powered by Framer Motion position tracking.
+
 ### 🎮 **Play Mode**
-- **Strongest AI**: Play against **Stockfish 17.1 (WebAssembly)** directly in your browser.
-- **Adjustable Difficulty**: From Beginner (~800 ELO) to Grandmaster (~3000+ ELO).
-- **Smooth Gameplay**: Responsive board, drag-and-drop, and click-to-move support.
-- **Game Controls**: Undo, Redo, Flip Board, Hint System.
+- **Stockfish 17 Engine**: Real-time evaluation and AI opponent powered by WebAssembly and Web Workers.
+- **4-Tier ELO Difficulties**:
+  - 🟢 **Beginner (~1000 ELO)**
+  - 🔵 **Novice (~1400 ELO)**
+  - 🟣 **Intermediate (~1800 ELO)**
+  - 🔥 **Advanced (~2200+ ELO)**
+- **Game Controls**: Play As (White/Black), Undo, Redo, Flip Board, Hint Engine, and Autoplay mode.
+- **ECO Opening Identification**: Real-time opening detection with ECO code badges (e.g. *B90 Sicilian Defense*).
+- **Session-Based State Preservation**: In-app tab switching retains board state, while browser page reloads automatically initialize a fresh board.
 
 ### 🔍 **Analysis Mode (Pro)**
-- **Real-Time Evaluation**: See the evaluation bar and centipawn score instantly.
+- **Real-Time Evaluation Bar**: Live centipawn and checkmate evaluation updates.
 - **Move Classification**:
   - 🏆 **Brilliant (!!)**
   - ✨ **Great (!)**
@@ -44,23 +54,12 @@ Whether you want to challenge Stockfish 17, analyze your games with professional
   - ⚠️ **Inaccuracy (!?)**
   - ❌ **Mistake (?)**
   - 💀 **Blunder (??)**
-- **Multi-PV Support**: See up to 5 best engine lines simultaneously.
-- **PGN Export**: Auto-generate PGNs with site metadata and game results.
+- **Multi-PV Support**: View top recommended engine lines.
+- **PGN Export & Import**: Import and export standard PGN files with move annotations.
 
-### 📚 **Openings Trainer**
-- **Curated Library**: Explore a collection of famous openings and variations.
-- **Top Sequences**: Learn historical openings like the *King's Indian Defense*, *Ruy Lopez*, or *Sicilian Dragon*.
-- **Interactive Drill Mode**: The AI plays the opponent's moves automatically, helping you memorize lines.
-
-### 🧩 **Puzzles & Tactics**
-- **Tactical Training**: Sharpen your vision with a collection of challenging puzzles.
-- **Difficulty Levels**: Easy (Mate in 1), Medium (Mate in 2), Hard (Mate in 5+).
-- **Hints & Solutions**: Get visual cues if you're stuck.
-
-### 📱 **Fully Responsive (Mobile First)**
-- **Mobile Optimized**: Custom layouts for iPhone/Android.
-- **Touch Friendly**: Optimized board sizing and touch controls.
-- **PWA Ready**: designed to feel like a native app.
+### 📚 **Openings & Puzzles**
+- **ECO Openings Trainer**: Search and learn thousands of theory lines with interactive move highlights.
+- **Tactics & Puzzles**: Practice checkmate patterns and tactical combinations across varying difficulty tiers.
 
 ---
 
@@ -68,24 +67,12 @@ Whether you want to challenge Stockfish 17, analyze your games with professional
 
 | Layer | Technologies |
 |-------|--------------|
-| **Frontend** | React, Vite, TypeScript |
-| **Styling** | Tailwind CSS, Shadcn UI, Lucide Icons |
-| **Chess Logic** | Chess.js, React-Chessboard |
-| **Engine** | Stockfish 17.1 (WASM), Web Workers |
-| **State** | React Hooks, Context API |
+| **Frontend** | React 18, Vite 7, TypeScript |
+| **Styling** | Tailwind CSS, Shadcn UI, Lucide Icons, Custom CSS Variables |
+| **Animations** | Framer Motion, Custom HTML5 Canvas 2D Engines (`ShapeGrid`, `ParticleText`) |
+| **Chess Logic** | Chess.js |
+| **Engine** | Stockfish 17 (WASM), Web Workers |
 | **Deployment** | Vercel |
-
----
-
-## 📸 **Screenshots**
-
-| Play Mode | Analysis Mode |
-|-----------|---------------|
-| *Classic board with controls* | *Deep engine evaluation with graphs* |
-
-| Openings | Mobile View |
-|----------|-------------|
-| *Explore thousands of variations* | *Perfectly optimized for phones* |
 
 ---
 
@@ -93,25 +80,25 @@ Whether you want to challenge Stockfish 17, analyze your games with professional
 
 To run this project locally:
 
-1.  **Clone the repository**
-    ```sh
-    git clone https://github.com/learnwithharman/chesswithmonk.git
-    ```
+1. **Clone the repository**
+   ```sh
+   git clone https://github.com/learnwithharman/chesswithmonk.git
+   ```
 
-2.  **Navigate to the project directory**
-    ```sh
-    cd chesswithmonk
-    ```
+2. **Navigate to the project directory**
+   ```sh
+   cd chesswithmonk
+   ```
 
-3.  **Install dependencies**
-    ```sh
-    npm install
-    ```
+3. **Install dependencies**
+   ```sh
+   npm install
+   ```
 
-4.  **Start the development server**
-    ```sh
-    npm run dev
-    ```
+4. **Start the development server**
+   ```sh
+   npm run dev
+   ```
 
 ---
 
@@ -122,7 +109,7 @@ To run this project locally:
 **GitHub:** [learnwithharman](https://github.com/learnwithharman)  
 **LinkedIn:** [Harman](https://www.linkedin.com/in/harman-068394327?utm_source=share_via&utm_content=profile&utm_medium=member_android)  
 
-Feel free to fork this repository and submit pull requests. Any contributions to improve the engine integration or UI are welcome!
+Contributions, issue reports, and pull requests are welcome!
 
 ---
 
