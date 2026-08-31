@@ -76,31 +76,57 @@ const Play = () => {
         return () => clearTimeout(timeoutId);
     }, [isAutoplay, game, pendingPromotionMove, isAiThinking, currentMoveIndex, playerColor]);
 
-    // Load saved game from localStorage
+    // Load saved game from sessionStorage unless page was reloaded
     useEffect(() => {
-        const saved = localStorage.getItem('chess-game');
+        let isReload = false;
+        try {
+            const navEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+            if (navEntries && navEntries.length > 0) {
+                isReload = navEntries[0].type === 'reload';
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                isReload = (performance.navigation as any)?.type === 1;
+            }
+        } catch {
+            isReload = false;
+        }
+
+        if (isReload) {
+            sessionStorage.removeItem('chess-game');
+            localStorage.removeItem('chess-game');
+            return;
+        }
+
+        const saved = sessionStorage.getItem('chess-game') || localStorage.getItem('chess-game');
         if (saved) {
             try {
                 const data = JSON.parse(saved);
-                game.load(data.fen);
-                setPosition(data.fen);
-                setMoveHistory(data.moves || []);
-                setHistoryStack(data.history || [game.fen()]);
-                setCurrentMoveIndex(data.moves?.length - 1 || -1);
+                if (data && data.fen) {
+                    game.load(data.fen);
+                    setPosition(data.fen);
+                    setMoveHistory(data.moves || []);
+                    setHistoryStack(data.history || [game.fen()]);
+                    setCurrentMoveIndex((data.moves?.length || 1) - 1);
+                }
             } catch (e) {
                 console.error('Failed to load saved game');
             }
         }
     }, []);
 
-    // Save game to localStorage
+    // Save game state during navigation session
     useEffect(() => {
-        const data = {
-            fen: position,
-            moves: moveHistory,
-            history: historyStack,
-        };
-        localStorage.setItem('chess-game', JSON.stringify(data));
+        if (moveHistory.length > 0) {
+            const data = {
+                fen: position,
+                moves: moveHistory,
+                history: historyStack,
+            };
+            sessionStorage.setItem('chess-game', JSON.stringify(data));
+        } else {
+            sessionStorage.removeItem('chess-game');
+            localStorage.removeItem('chess-game');
+        }
     }, [position, moveHistory, historyStack]);
 
     // Update suggestions when position changes
@@ -309,12 +335,11 @@ const Play = () => {
         setSuggestions([]);
         setGameResult(null); // Reset game result to hide popup
         setIsAutoplay(false);
+        sessionStorage.removeItem('chess-game');
+        localStorage.removeItem('chess-game');
         // If player chose black, flip board automatically
         if (playerColor === 'b') {
             setFlipped(true);
-            // If player is black, AI (White) should move first if autoplay is on.
-            // But usually new game starts with autoplay off.
-            // If we want to support "Play as Black" immediately, we might need to trigger AI move if it's white's turn.
         } else {
             setFlipped(false);
         }
@@ -402,7 +427,7 @@ const Play = () => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-2 sm:px-4 py-4 md:py-8 max-w-[1600px]">
             <AiOverlay visible={isAiThinking} text="AI is thinking..." />
             <PromotionModal
                 visible={!!pendingPromotionMove}
@@ -417,9 +442,18 @@ const Play = () => {
                 }}
                 onCancel={() => setPendingPromotionMove(null)}
             />
-            <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_400px] gap-6 max-w-[1800px] mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_340px] gap-6 items-start">
                 {/* Left Column - Move History & Suggestions */}
-                <div className="hidden lg:flex lg:flex-col h-[calc(100vh-200px)]">
+                <div className="hidden lg:flex lg:flex-col gap-4 h-[calc(100vh-140px)] sticky top-20">
+                    {/* Opening Title Badge */}
+                    <div className="bg-card/80 border border-border/80 p-3.5 rounded-xl shadow-md text-center shrink-0">
+                        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">Current Opening</div>
+                        <h2 className="text-base font-bold text-foreground flex items-center justify-center gap-2">
+                            {ecoCode && <span className="bg-primary/10 text-primary px-2 py-0.5 rounded font-mono text-xs border border-primary/20">{ecoCode}</span>}
+                            <span className="truncate">{openingName || "Starting Position"}</span>
+                        </h2>
+                    </div>
+
                     <div className="flex-1 min-h-0">
                         <MoveList
                             moves={moveHistory}
@@ -428,16 +462,7 @@ const Play = () => {
                         />
                     </div>
 
-                    {/* Opening Title Panel moved here */}
-                    <div className="bg-card/50 backdrop-blur-sm p-3 rounded-lg border border-border text-center shrink-0 my-2">
-                        <h2 className="text-lg font-semibold text-foreground">
-                            {ecoCode && <span className="text-primary mr-2 font-mono text-sm">{ecoCode}</span>}
-                            <span className="text-base">{openingName || "Unknown Opening"}</span>
-                        </h2>
-                    </div>
-
-                    <div className="h-px bg-border my-2 shrink-0"></div>
-                    <div className="h-[320px] shrink-0 min-h-0">
+                    <div className="h-[280px] shrink-0 min-h-0">
                         <SuggestionPanel
                             suggestions={suggestions}
                             visible={showSuggestions}
@@ -445,10 +470,18 @@ const Play = () => {
                     </div>
                 </div>
 
-                {/* Center Column - Board */}
-                <div className="space-y-4">
+                {/* Center Column - Chess Board (Hero Focus) */}
+                <div className="space-y-4 flex flex-col items-center">
+                    {/* Mobile Opening Badge */}
+                    <div className="lg:hidden w-full bg-card/80 border border-border/80 p-2.5 rounded-xl text-center">
+                        <div className="text-xs font-semibold text-foreground flex items-center justify-center gap-2">
+                            {ecoCode && <span className="text-primary font-mono text-xs">{ecoCode}</span>}
+                            <span>{openingName || "Starting Position"}</span>
+                        </div>
+                    </div>
+
                     <div className="w-full flex items-center justify-center">
-                        <div className="max-w-full max-h-[80vh] aspect-square relative">
+                        <div className="w-full max-w-[620px] aspect-square relative shadow-2xl rounded-lg overflow-hidden">
                             <EndGameBanner visible={!!gameResult} winner={gameResult} onRestart={handleNewGame} />
                             <ChessBoard
                                 chess={game}
@@ -461,16 +494,14 @@ const Play = () => {
                         </div>
                     </div>
 
-                    {/* Mobile: Move History below board */}
-                    <div className="lg:hidden">
+                    {/* Mobile: Move History & Controls Stack */}
+                    <div className="lg:hidden w-full space-y-4">
                         <MoveList
                             moves={moveHistory}
                             currentMoveIndex={currentMoveIndex}
                             onMoveClick={handleMoveClick}
                         />
-                    </div>
 
-                    <div className="lg:hidden space-y-4">
                         <Controls
                             difficulty={difficulty}
                             onDifficultyChange={setDifficulty}
@@ -491,14 +522,16 @@ const Play = () => {
                         />
                     </div>
 
-                    <PGNEditor
-                        pgn={getPGNWithHeaders()}
-                        onImport={handlePGNImport}
-                    />
+                    <div className="w-full max-w-[620px]">
+                        <PGNEditor
+                            pgn={getPGNWithHeaders()}
+                            onImport={handlePGNImport}
+                        />
+                    </div>
                 </div>
 
-                {/* Right Column - Controls */}
-                <div className="hidden lg:block">
+                {/* Right Column - Controls (Desktop) */}
+                <div className="hidden lg:block sticky top-20">
                     <Controls
                         difficulty={difficulty}
                         onDifficultyChange={setDifficulty}
