@@ -23,6 +23,15 @@ interface DraggingState {
   piece: { type: string; color: 'w' | 'b' };
 }
 
+interface BoardPiece {
+  id: string;
+  square: string;
+  type: string;
+  color: 'w' | 'b';
+  col: number;
+  row: number;
+}
+
 export const ChessBoard = memo(function ChessBoard({
   chess,
   onMove,
@@ -46,6 +55,7 @@ export const ChessBoard = memo(function ChessBoard({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const prevPiecesRef = useRef<Map<string, string>>(new Map()); // square -> pieceId map
 
   // Resize Observer to make board responsive
   useEffect(() => {
@@ -54,14 +64,11 @@ export const ChessBoard = memo(function ChessBoard({
     const updateSize = () => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect();
-        // Use the smaller dimension to ensure the square board fits
         setBoardSize(Math.min(width, height));
       }
     };
 
-    // Initial size
     updateSize();
-
     const resizeObserver = new ResizeObserver(updateSize);
     resizeObserver.observe(containerRef.current);
 
@@ -70,8 +77,98 @@ export const ChessBoard = memo(function ChessBoard({
 
   const squareSize = boardSize / 8;
 
-  // Memoize board state
-  const board = useMemo(() => chess.board(), [chess.fen()]);
+  // Raw board array from chess.js
+  const fen = chess.fen();
+  const rawBoard = useMemo(() => chess.board(), [fen]);
+
+  // Determine piece coordinates helper
+  const getCoords = useCallback((square: string) => {
+    const fileIndex = square.charCodeAt(0) - 'a'.charCodeAt(0);
+    const rankIndex = parseInt(square[1]) - 1;
+    const col = flipped ? 7 - fileIndex : fileIndex;
+    const row = flipped ? rankIndex : 7 - rankIndex;
+    return { col, row };
+  }, [flipped]);
+
+  // Track pieces with stable IDs across FEN updates for smooth 180ms gliding animation
+  const pieces = useMemo<BoardPiece[]>(() => {
+    const newPieces: BoardPiece[] = [];
+    const currentSquareToId = new Map<string, string>();
+    const usedIds = new Set<string>();
+
+    const prevMap = prevPiecesRef.current;
+
+    // Helper to generate a unique ID for a piece
+    let counter = 1;
+    const makeId = (color: string, type: string) => {
+      let id = `${color}_${type}_${counter++}`;
+      while (usedIds.has(id)) {
+        id = `${color}_${type}_${counter++}`;
+      }
+      return id;
+    };
+
+    // First pass: locate pieces on current board
+    const currentPiecesBySquare: { square: string; color: 'w' | 'b'; type: string }[] = [];
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const p = rawBoard[r][f];
+        if (p) {
+          const rank = 8 - r;
+          const file = String.fromCharCode(97 + f);
+          const sq = `${file}${rank}`;
+          currentPiecesBySquare.push({ square: sq, color: p.color, type: p.type });
+        }
+      }
+    }
+
+    // Step 1: If lastMove is present, assign the moved piece's ID from lastMove.from to lastMove.to
+    if (lastMove && prevMap.has(lastMove.from)) {
+      const movedPieceId = prevMap.get(lastMove.from)!;
+      const targetPiece = currentPiecesBySquare.find(p => p.square === lastMove.to);
+      if (targetPiece) {
+        currentSquareToId.set(lastMove.to, movedPieceId);
+        usedIds.add(movedPieceId);
+      }
+    }
+
+    // Step 2: For pieces at same square with same type/color, retain existing ID
+    for (const item of currentPiecesBySquare) {
+      if (currentSquareToId.has(item.square)) continue;
+
+      const existingId = prevMap.get(item.square);
+      if (existingId && !usedIds.has(existingId)) {
+        // verify piece color and type match prefix if stored
+        currentSquareToId.set(item.square, existingId);
+        usedIds.add(existingId);
+      }
+    }
+
+    // Step 3: For remaining pieces, assign a new ID
+    for (const item of currentPiecesBySquare) {
+      if (!currentSquareToId.has(item.square)) {
+        const id = makeId(item.color, item.type);
+        currentSquareToId.set(item.square, id);
+        usedIds.add(id);
+      }
+
+      const id = currentSquareToId.get(item.square)!;
+      const { col, row } = getCoords(item.square);
+      newPieces.push({
+        id,
+        square: item.square,
+        color: item.color,
+        type: item.type,
+        col,
+        row,
+      });
+    }
+
+    // Save current square->id map for next move transition
+    prevPiecesRef.current = currentSquareToId;
+
+    return newPieces;
+  }, [fen, rawBoard, lastMove, getCoords]);
 
   // Determine king square for check highlight
   const inCheck = chess.inCheck();
@@ -80,7 +177,7 @@ export const ChessBoard = memo(function ChessBoard({
 
     for (let r = 0; r < 8; r++) {
       for (let f = 0; f < 8; f++) {
-        const p = board[r][f];
+        const p = rawBoard[r][f];
         if (p && p.type === 'k' && p.color === chess.turn()) {
           const rank = 8 - r;
           const file = String.fromCharCode(97 + f);
@@ -89,19 +186,16 @@ export const ChessBoard = memo(function ChessBoard({
       }
     }
     return null;
-  }, [inCheck, board, chess]);
+  }, [inCheck, rawBoard, chess]);
 
   const files = useMemo(() => flipped ? ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'] : ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], [flipped]);
   const ranks = useMemo(() => flipped ? ['1', '2', '3', '4', '5', '6', '7', '8'] : ['8', '7', '6', '5', '4', '3', '2', '1'], [flipped]);
 
-  // Helper to get center coordinates of a square
   const getSquareCenter = useCallback((square: string) => {
     const fileChar = square[0];
     const rankChar = square[1];
-
     const fileIndex = fileChar.charCodeAt(0) - 'a'.charCodeAt(0);
     const rankIndex = parseInt(rankChar) - 1;
-
     const col = flipped ? 7 - fileIndex : fileIndex;
     const row = flipped ? rankIndex : 7 - rankIndex;
 
@@ -111,7 +205,6 @@ export const ChessBoard = memo(function ChessBoard({
     };
   }, [flipped, squareSize]);
 
-  // Snap pixel coordinates to board square
   const snapToSquare = useCallback((pixelX: number, pixelY: number): string | null => {
     const file = Math.floor(pixelX / squareSize);
     const rank = Math.floor(pixelY / squareSize);
@@ -163,10 +256,9 @@ export const ChessBoard = memo(function ChessBoard({
       const x = clientX - rect.left;
       const y = clientY - rect.top;
 
-      // Magnetic Snap Logic
       let targetSquare: string | null = null;
       let minDistance = Infinity;
-      const MAGNETIC_THRESHOLD = squareSize * 0.8;
+      const MAGNETIC_THRESHOLD = squareSize * 0.85;
 
       for (const legalMove of legalMoves) {
         const center = getSquareCenter(legalMove);
@@ -215,9 +307,6 @@ export const ChessBoard = memo(function ChessBoard({
   }, [draggingPiece, legalMoves, snapToSquare, onMove, getSquareCenter, squareSize, dragX, dragY, dragTargetSquare]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent, square: string) => {
-    // Prevent default browser behavior (text selection, native drag)
-    // We only prevent default if it's not a touch event or if we want to stop scrolling
-    // For mouse events, this stops text selection.
     if (e.type === 'mousedown') {
       e.preventDefault();
     }
@@ -273,29 +362,26 @@ export const ChessBoard = memo(function ChessBoard({
   }, [chess, selectedSquare, legalMoves, onMove]);
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center p-2 md:p-0">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center p-1 md:p-0">
       <div
         ref={boardRef}
-        className="relative bg-board-light grid grid-cols-8 shadow-xl rounded-sm overflow-hidden select-none"
+        className="relative bg-[#ebecd0] grid grid-cols-8 shadow-2xl rounded-sm overflow-hidden select-none ring-1 ring-black/10 dark:ring-white/10"
         style={{
           width: boardSize,
           height: boardSize,
           touchAction: 'none'
         }}
       >
+        {/* Board Squares Layer */}
         {ranks.map((rank, rankIndex) =>
           files.map((file, fileIndex) => {
             const square = `${file}${rank}`;
-            const r = 8 - parseInt(rank);
-            const f = file.charCodeAt(0) - 'a'.charCodeAt(0);
-            const piece = board[r][f];
             const isLight = (rankIndex + fileIndex) % 2 === 0;
             const isLastMoveSquare = lastMove && (lastMove.from === square || lastMove.to === square);
             const isSelected = selectedSquare === square;
             const isLegalMove = legalMoves.includes(square);
             const isCheck = checkSquare === square;
-            const isDragging = draggingPiece?.square === square;
-            const isTarget = dragTargetSquare === square;
+            const pieceAtSquare = chess.get(square as ChessSquare);
 
             const isHintSource = hintMove?.from === square;
             const isHintTarget = hintMove?.to === square;
@@ -306,37 +392,78 @@ export const ChessBoard = memo(function ChessBoard({
               <div key={square} className="relative w-full h-full">
                 <Square
                   square={square}
-                  piece={!isDragging ? piece : null}
                   isLight={isLight}
-                  isLastMove={isLastMoveSquare}
                   isSelected={isSelected}
                   isLegalMove={isLegalMove}
+                  hasPiece={!!pieceAtSquare}
+                  isLastMove={isLastMoveSquare}
                   isCheck={isCheck}
                   isHint={isHintSource || isHintTarget}
                   isWrong={isWrongSource || isWrongTarget}
                   onClick={() => handleSquareClick(square)}
                   onMouseDown={(e) => handleMouseDown(e, square)}
                   onTouchStart={(e) => handleMouseDown(e, square)}
-                  isDragging={false}
                   customStyle={customSquareStyles[square]}
                 />
-                {isTarget && draggingPiece && (
-                  <div className="absolute inset-0 border-4 border-white/50 pointer-events-none z-20 rounded-sm" />
+                {dragTargetSquare === square && draggingPiece && (
+                  <div className="absolute inset-0 border-4 border-amber-300/70 pointer-events-none z-20 rounded-sm" />
                 )}
               </div>
             );
           })
         )}
+
+        {/* Piece Overlay Layer with Crisp 180ms Movement Animation */}
+        <div className="absolute inset-0 pointer-events-none z-30">
+          <AnimatePresence>
+            {pieces.map((p) => {
+              const isBeingDragged = draggingPiece?.square === p.square;
+
+              return (
+                <motion.div
+                  key={p.id}
+                  className="absolute pointer-events-auto cursor-grab active:cursor-grabbing"
+                  initial={{
+                    left: `${p.col * 12.5}%`,
+                    top: `${p.row * 12.5}%`,
+                    opacity: 1,
+                  }}
+                  animate={{
+                    left: `${p.col * 12.5}%`,
+                    top: `${p.row * 12.5}%`,
+                    opacity: isBeingDragged ? 0 : 1,
+                  }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{
+                    left: { duration: 0.18, ease: [0.2, 0, 0.2, 1] },
+                    top: { duration: 0.18, ease: [0.2, 0, 0.2, 1] },
+                    opacity: { duration: 0.1 },
+                  }}
+                  style={{
+                    width: '12.5%',
+                    height: '12.5%',
+                    willChange: 'left, top',
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e, p.square)}
+                  onTouchStart={(e) => handleMouseDown(e, p.square)}
+                >
+                  <Piece type={p.type} color={p.color} />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
       </div>
 
+      {/* Floating Dragged Piece */}
       <AnimatePresence>
         {draggingPiece && (
           <motion.div
             className="fixed pointer-events-none top-0 left-0 z-50"
-            initial={{ scale: 1.2 }}
-            animate={{ scale: 1.2 }}
+            initial={{ scale: 1.15 }}
+            animate={{ scale: 1.15 }}
             exit={{ scale: 1 }}
-            transition={{ duration: 0.1 }}
+            transition={{ duration: 0.08 }}
             style={{
               x: dragX,
               y: dragY,
@@ -354,4 +481,5 @@ export const ChessBoard = memo(function ChessBoard({
     </div>
   );
 });
+
 
