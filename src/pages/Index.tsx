@@ -317,7 +317,7 @@ const Index = () => {
       <footer className="py-8 bg-card border-t border-border/80">
         <div className="container mx-auto px-4 text-center space-y-4">
           <div className="flex justify-center gap-4">
-            <a href="https://www.instagram.com/ded.lecter/?hl=en" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-background border border-border/60 hover:text-primary transition-colors">
+            <a href="https://www.instagram.com/reekursive/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-background border border-border/60 hover:text-primary transition-colors">
               <Instagram className="w-4 h-4" />
             </a>
             <a href="https://github.com/learnwithharman" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-background border border-border/60 hover:text-primary transition-colors">

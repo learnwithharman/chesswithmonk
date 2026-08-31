@@ -105,7 +105,7 @@ To run this project locally:
 ## 🤝 **Connect & Contributing**
 
 **Author:** Harman  
-**Instagram:** [@ded.lecter](https://www.instagram.com/ded.lecter/?hl=en)  
+**Instagram:** [@reekursive](https://www.instagram.com/reekursive/)  
 **GitHub:** [learnwithharman](https://github.com/learnwithharman)  
 **LinkedIn:** [Harman](https://www.linkedin.com/in/harman-068394327?utm_source=share_via&utm_content=profile&utm_medium=member_android)  
 
