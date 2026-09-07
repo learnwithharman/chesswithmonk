@@ -13,6 +13,7 @@ import { Move, PVLine, MoveQualityLabel } from '@/lib/types';
 import { RotateCcw, Upload, Download, Zap, ZapOff, ChevronLeft, ChevronRight, FlipHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { identifyOpening, loadEcoTheory } from '@/lib/openingEngine';
+import { playMoveSound } from '@/lib/sound';
 import {
     normalizeEvaluation,
     formatEvaluation,
@@ -148,12 +149,12 @@ const Analysis = () => {
 
             const onMessage = (ev: MessageEvent) => {
                 if (ev.data?.id !== id) return;
-                StockfishWorker.removeEventListener('message', onMessage as any);
+                StockfishWorker.removeEventListener('message', onMessage as EventListener);
 
                 if (ev.data.suggestions && Array.isArray(ev.data.suggestions)) {
                     const suggestions = ev.data.suggestions;
 
-                    const lines: PVLine[] = suggestions.map((s: any) => {
+                    const lines: PVLine[] = suggestions.map((s: { pvNum: number; move: { from: string; to: string; promotion?: string }; score: number; mate?: number | null; depth?: number; uciMove?: string }) => {
                         try {
                             const temp = new Chess(fenToAnalyze);
                             const mv = temp.move({
@@ -190,7 +191,7 @@ const Analysis = () => {
                 }
             };
 
-            StockfishWorker.addEventListener('message', onMessage as any);
+            StockfishWorker.addEventListener('message', onMessage as EventListener);
             StockfishWorker.postMessage({
                 id,
                 action: 'suggestions',
@@ -576,6 +577,7 @@ const Analysis = () => {
                                         try {
                                             const result = newGame.move(move);
                                             if (result) {
+                                                playMoveSound(result, newGame);
                                                 setGame(newGame);
                                                 setFen(newGame.fen());
                                                 setLastMove({ from: move.from, to: move.to });

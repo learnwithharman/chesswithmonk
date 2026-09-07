@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, RotateCcw, CheckCircle2, XCircle, Flame, Trophy, Lightbulb, HelpCircle, PlayCircle, Timer, GraduationCap, Dumbbell, Zap } from 'lucide-react';
 import { Move } from '@/lib/types';
+import { playMoveSound } from '@/lib/sound';
 
 interface Variation {
     name: string;
@@ -48,7 +49,7 @@ const LearnOpenings = () => {
             .then(res => res.json())
             .then(index => {
                 const variations = index[ecoCode];
-                const found = variations?.find((v: any) => v.name === variationName);
+                const found = variations?.find((v: Variation) => v.name === variationName);
                 if (found) {
                     setVariation(found);
                     // Parse moves
@@ -163,6 +164,7 @@ const LearnOpenings = () => {
         try {
             const result = tempGame.move(move);
             if (!result) return;
+            playMoveSound(result, tempGame);
 
             const playedSan = result.san;
             const expectedSan = moveList[currentMoveIndex];
@@ -191,7 +193,8 @@ const LearnOpenings = () => {
                     setTimeout(() => {
                         const computerSan = moveList[nextIndex];
                         const g = new Chess(tempGame.fen());
-                        g.move(computerSan);
+                        const compResult = g.move(computerSan);
+                        if (compResult) playMoveSound(compResult, g);
                         setGame(g);
                         setCurrentMoveIndex(nextIndex + 1);
                         setFeedback(null);

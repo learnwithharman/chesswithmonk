@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Move } from '@/lib/types';
+import { playMoveSound } from '@/lib/sound';
 
 type Mode = 'learn' | 'practice' | 'drill' | 'time';
 
@@ -236,7 +237,8 @@ const FamousOpenings = ({ onCourseStart, onCourseEnd }: FamousOpeningsProps) => 
 
         if (isCorrect) {
             const newChess = new Chess(gameState.chess.fen());
-            newChess.move(move);
+            const moveRes = newChess.move(move);
+            if (moveRes) playMoveSound(moveRes, newChess);
 
             const nextIndex = gameState.currentMoveIndex + 1;
             const isFinished = nextIndex >= (currentLine?.moves.length || 0);
@@ -319,7 +321,8 @@ const FamousOpenings = ({ onCourseStart, onCourseEnd }: FamousOpeningsProps) => 
             const moveSan = currentLine.moves[prev.currentMoveIndex];
             const newChess = new Chess(prev.chess.fen());
             try {
-                newChess.move(moveSan);
+                const autoRes = newChess.move(moveSan);
+                if (autoRes) playMoveSound(autoRes, newChess);
             } catch (e) {
                 console.error("Auto move failed", e);
                 return prev;
@@ -923,7 +926,7 @@ const FamousOpenings = ({ onCourseStart, onCourseEnd }: FamousOpeningsProps) => 
     );
 };
 
-function ChevronRight(props: any) {
+function ChevronRight(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Chess } from 'chess.js';
+import { Chess, Square } from 'chess.js';
 import { ChessBoard } from '@/components/ChessBoard';
 import { MoveList } from '@/components/MoveList';
 import { Controls } from '@/components/Controls';
@@ -17,6 +17,7 @@ import AiOverlay from '@/components/AiOverlay';
 import EndGameBanner from '@/components/EndGameBanner';
 import PromotionModal from '@/components/PromotionModal';
 import { identifyOpening, loadEcoTheory } from '@/lib/openingEngine';
+import { playMoveSound } from '@/lib/sound';
 
 const Play = () => {
     const [game, setGame] = useState(() => {
@@ -65,10 +66,10 @@ const Play = () => {
         const isOpponentTurn = game.turn() !== playerColor;
 
         if (isAutoplay && isOpponentTurn && !game.isGameOver() && !pendingPromotionMove && !isAiThinking) {
-            // Small delay to make it look natural
+            // Small delay to make it look natural and snappy
             timeoutId = setTimeout(() => {
                 handleAiMove();
-            }, 1000);
+            }, 250);
         } else if (game.isGameOver() || pendingPromotionMove) {
             setIsAutoplay(false);
         }
@@ -138,7 +139,7 @@ const Play = () => {
                 const id = String(Math.random());
                 const onMessage = (ev: MessageEvent) => {
                     if (ev.data?.id !== id) return;
-                    AiWorker.removeEventListener('message', onMessage as any);
+                    AiWorker.removeEventListener('message', onMessage as EventListener);
                     clearTimeout(timeout);
                     setIsSuggesting(false);
 
@@ -146,7 +147,7 @@ const Play = () => {
 
                     if (ev.data.suggestions && Array.isArray(ev.data.suggestions)) {
                         // Add SAN to suggestions using chess.js
-                        const suggestionsWithSan = ev.data.suggestions.map((s: any) => {
+                        const suggestionsWithSan = ev.data.suggestions.map((s: Suggestion) => {
                             try {
                                 const tempChess = new Chess(game.fen());
                                 const move = tempChess.move({
@@ -171,12 +172,12 @@ const Play = () => {
                 };
                 // Safety timeout
                 const timeout = setTimeout(() => {
-                    AiWorker.removeEventListener('message', onMessage as any);
+                    AiWorker.removeEventListener('message', onMessage as EventListener);
                     setIsSuggesting(false);
                     console.error('[Play] Suggestions worker timed out');
                 }, 10000);
 
-                AiWorker.addEventListener('message', onMessage as any);
+                AiWorker.addEventListener('message', onMessage as EventListener);
                 AiWorker.postMessage({ id, action: 'suggestions', fen: position, difficulty });
             }
         }
@@ -225,6 +226,7 @@ const Play = () => {
             });
 
             if (result) {
+                playMoveSound(result, game);
                 const newHistory = [...moveHistory.slice(0, currentMoveIndex + 1), result.san];
                 const newHistoryStack = [...historyStack.slice(0, currentMoveIndex + 2), game.fen()];
 
@@ -266,7 +268,7 @@ const Play = () => {
         // Detect pawn promotion: if moving piece is a pawn and destination rank is 8 or 1,
         // prompt the user to choose promotion piece.
         try {
-            const movingPiece = game.get(move.from as any);
+            const movingPiece = game.get(move.from as Square);
             if (movingPiece?.type === 'p' && (move.to[1] === '8' || move.to[1] === '1')) {
                 // store pending move and show promotion chooser
                 setPendingPromotionMove(move);
@@ -290,7 +292,7 @@ const Play = () => {
             const id = String(Math.random());
             const onMessage = (ev: MessageEvent) => {
                 if (ev.data?.id !== id) return;
-                AiWorker.removeEventListener('message', onMessage as any);
+                AiWorker.removeEventListener('message', onMessage as EventListener);
                 clearTimeout(timeout);
                 setIsAiThinking(false);
                 if (ev.data.move) {
@@ -299,12 +301,12 @@ const Play = () => {
             };
             // Safety timeout in case worker doesn't respond
             const timeout = setTimeout(() => {
-                AiWorker.removeEventListener('message', onMessage as any);
+                AiWorker.removeEventListener('message', onMessage as EventListener);
                 setIsAiThinking(false);
                 console.error('AI worker timed out');
-            }, 15000);
+            }, 3000);
 
-            AiWorker.addEventListener('message', onMessage as any);
+            AiWorker.addEventListener('message', onMessage as EventListener);
             AiWorker.postMessage({ id, action: 'pick', fen: position, difficulty });
         } else {
             // Fallback to synchronous computation
@@ -428,11 +430,10 @@ const Play = () => {
 
     return (
         <div className="container mx-auto px-2 sm:px-4 py-4 md:py-8 max-w-[1600px]">
-            <AiOverlay visible={isAiThinking} text="AI is thinking..." />
             <PromotionModal
                 visible={!!pendingPromotionMove}
                 color={
-                    pendingPromotionMove ? (game.get(pendingPromotionMove.from as any)?.color as 'w' | 'b') : 'w'
+                    pendingPromotionMove ? (game.get(pendingPromotionMove.from as Square)?.color as 'w' | 'b') : 'w'
                 }
                 onSelect={(piece) => {
                     if (!pendingPromotionMove) return;

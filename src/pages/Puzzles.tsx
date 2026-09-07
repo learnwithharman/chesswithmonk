@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Trophy, RefreshCw, Lightbulb, CheckCircle2, ArrowRight, RotateCcw, Play } from 'lucide-react';
 import { PUZZLES, Puzzle } from '@/data/puzzles';
+import { playMoveSound } from '@/lib/sound';
 import {
     Dialog,
     DialogContent,
@@ -37,7 +38,7 @@ export default function Puzzles() {
         const puzzleList = PUZZLES[difficulty] || PUZZLES['easy'];
 
         // Get current index for this difficulty
-        let index = puzzleIndices.current[difficulty as keyof typeof puzzleIndices.current];
+        const index = puzzleIndices.current[difficulty as keyof typeof puzzleIndices.current];
 
         // Select puzzle
         const nextPuzzle = puzzleList[index % puzzleList.length];
@@ -90,6 +91,7 @@ export default function Puzzles() {
         try {
             const result = tempGame.move(move);
             if (!result) return;
+            playMoveSound(result, tempGame);
 
             const playedSan = result.san;
             const expectedSan = currentPuzzle.solution[moveIndex];
@@ -120,7 +122,8 @@ export default function Puzzles() {
                         setTimeout(() => {
                             const opponentMoveSan = currentPuzzle.solution[nextIndex];
                             const gameCopy = new Chess(tempGame.fen());
-                            gameCopy.move(opponentMoveSan);
+                            const opResult = gameCopy.move(opponentMoveSan);
+                            if (opResult) playMoveSound(opResult, gameCopy);
                             setGame(gameCopy);
                             setMoveIndex(nextIndex + 1);
                             setCustomSquareStyles({}); // Clear highlights after opponent move
