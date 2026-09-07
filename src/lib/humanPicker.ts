@@ -18,7 +18,7 @@ export function pickHumanMove(game: Chess, _elo?: number | EloConfig): Move | nu
     return {
         from: move.from,
         to: move.to,
-        promotion: move.promotion as any,
+        promotion: move.promotion as 'q' | 'r' | 'b' | 'n' | undefined,
         san: move.san,
     };
 }

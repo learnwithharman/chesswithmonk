@@ -112,7 +112,7 @@ const getSuggestions = (fen: string, elo: number) => {
   if (elo > 1200) depth = 3;
   // Limit depth to 3 for suggestions to keep it fast enough for real-time feedback
 
-  const moveEvaluations: { move: any; score: number }[] = [];
+  const moveEvaluations: { move: { from: string; to: string; promotion?: string; san?: string }; score: number }[] = [];
   const isWhite = chess.turn() === 'w';
 
   for (const move of moves) {

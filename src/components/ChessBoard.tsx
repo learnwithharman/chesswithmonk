@@ -56,6 +56,14 @@ export const ChessBoard = memo(function ChessBoard({
   const containerRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const prevPiecesRef = useRef<Map<string, string>>(new Map()); // square -> pieceId map
+  const skipAnimationPieceIdRef = useRef<string | null>(null);
+
+  // Clear skipAnimation ref after paint
+  useEffect(() => {
+    if (skipAnimationPieceIdRef.current) {
+      skipAnimationPieceIdRef.current = null;
+    }
+  });
 
   // Resize Observer to make board responsive
   useEffect(() => {
@@ -275,6 +283,10 @@ export const ChessBoard = memo(function ChessBoard({
       }
 
       if (targetSquare && legalMoves.includes(targetSquare)) {
+        const movedPieceId = prevPiecesRef.current.get(draggingPiece.square);
+        if (movedPieceId) {
+          skipAnimationPieceIdRef.current = movedPieceId;
+        }
         onMove({ from: draggingPiece.square, to: targetSquare });
       }
 
@@ -313,7 +325,7 @@ export const ChessBoard = memo(function ChessBoard({
 
     if (!isDraggable) return;
 
-    const piece = chess.get(square as any);
+    const piece = chess.get(square as ChessSquare);
     if (!piece || piece.color !== chess.turn()) return;
 
     if (boardRef.current) {
@@ -418,6 +430,7 @@ export const ChessBoard = memo(function ChessBoard({
           <AnimatePresence>
             {pieces.map((p) => {
               const isBeingDragged = draggingPiece?.square === p.square;
+              const shouldSkipAnimation = skipAnimationPieceIdRef.current === p.id;
 
               return (
                 <motion.div
@@ -434,11 +447,15 @@ export const ChessBoard = memo(function ChessBoard({
                     opacity: isBeingDragged ? 0 : 1,
                   }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{
-                    left: { duration: 0.18, ease: [0.2, 0, 0.2, 1] },
-                    top: { duration: 0.18, ease: [0.2, 0, 0.2, 1] },
-                    opacity: { duration: 0.1 },
-                  }}
+                  transition={
+                    shouldSkipAnimation
+                      ? { duration: 0 }
+                      : {
+                          left: { duration: 0.18, ease: [0.2, 0, 0.2, 1] },
+                          top: { duration: 0.18, ease: [0.2, 0, 0.2, 1] },
+                          opacity: { duration: 0.1 },
+                        }
+                  }
                   style={{
                     width: '12.5%',
                     height: '12.5%',
@@ -462,8 +479,8 @@ export const ChessBoard = memo(function ChessBoard({
             className="fixed pointer-events-none top-0 left-0 z-50"
             initial={{ scale: 1.15 }}
             animate={{ scale: 1.15 }}
-            exit={{ scale: 1 }}
-            transition={{ duration: 0.08 }}
+            exit={{ opacity: 0, scale: 1 }}
+            transition={{ duration: 0.05 }}
             style={{
               x: dragX,
               y: dragY,

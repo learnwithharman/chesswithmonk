@@ -85,7 +85,9 @@ const waitForFonts = async (font: string): Promise<void> => {
 
   try {
     await document.fonts.load(font);
-  } catch {}
+  } catch (err) {
+    // Ignore font loading errors gracefully
+  }
 
   await document.fonts.ready;
 };

@@ -57,8 +57,8 @@ export const PerformanceMonitor = () => {
                 </span>
                 <span>Memory:</span>
                 <span>
-                    {/* @ts-ignore */}
-                    {performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) + ' MB' : 'N/A'}
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {(performance as any).memory ? Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024) + ' MB' : 'N/A'}
                 </span>
             </div>
         </div>
