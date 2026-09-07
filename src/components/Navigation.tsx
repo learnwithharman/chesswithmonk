@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, Swords, GraduationCap, Puzzle, Search, Library, Menu, X } from 'lucide-react';
+import { Moon, Sun, Swords, GraduationCap, Puzzle, Search, Library, Menu, X, Volume2, VolumeX } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { isMuted, toggleMuted } from '@/lib/sound';
 
 interface NavigationProps {
     darkMode: boolean;
@@ -14,6 +15,7 @@ interface NavigationProps {
 const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [soundMuted, setSoundMuted] = useState(() => isMuted());
 
     const isActive = (path: string) => location.pathname === path;
 
@@ -109,6 +111,16 @@ const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
                     <Button
                         variant="outline"
                         size="icon"
+                        onClick={() => setSoundMuted(toggleMuted())}
+                        className="rounded-lg h-9 w-9 border-border/70 hover:bg-secondary"
+                        title={soundMuted ? "Unmute sound effects" : "Mute sound effects"}
+                    >
+                        {soundMuted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-primary" />}
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="icon"
                         onClick={() => setDarkMode(!darkMode)}
                         className="rounded-lg h-9 w-9 border-border/70 hover:bg-secondary"
                         title="Toggle theme"
@@ -119,6 +131,16 @@ const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
 
                 {/* Mobile Menu Toggle */}
                 <div className="lg:hidden flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setSoundMuted(toggleMuted())}
+                        className="rounded-lg h-9 w-9 border-border/70"
+                        title={soundMuted ? "Unmute sound effects" : "Mute sound effects"}
+                    >
+                        {soundMuted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-primary" />}
+                    </Button>
+
                     <Button
                         variant="outline"
                         size="icon"
