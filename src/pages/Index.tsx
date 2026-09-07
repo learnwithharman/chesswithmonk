@@ -114,7 +114,7 @@ const Index = () => {
               <div className="text-xs md:text-sm font-medium text-muted-foreground">World-Class Engine</div>
             </div>
             <div className="p-4 rounded-xl bg-background/50 border border-border/50">
-              <div className="text-3xl md:text-4xl font-extrabold text-purple-400 mb-1">∞</div>
+              <div className="text-3xl md:text-4xl font-extrabold text-purple-400 mb-1">Soon</div>
               <div className="text-xs md:text-sm font-medium text-muted-foreground">Tactical Puzzles</div>
             </div>
             <div className="p-4 rounded-xl bg-background/50 border border-border/50">
@@ -220,9 +220,12 @@ const Index = () => {
                 <div className="w-12 h-12 bg-purple-500/10 border border-purple-500/20 rounded-lg flex items-center justify-center mb-6 text-purple-400">
                   <Trophy className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-foreground">Tactical Puzzles</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-xl font-bold text-foreground">Tactical Puzzles</h3>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Coming Soon</span>
+                </div>
                 <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                  Sharpen your tactical intuition with thousands of thematic puzzles covering pins, forks, double attacks, and checkmates.
+                  Adaptive tactical puzzle trainer with thousands of rating-matched tactics, theme filters, and instant move explanations.
                 </p>
               </div>
               <ul className="space-y-2 text-xs font-medium text-muted-foreground border-t border-border/50 pt-4">

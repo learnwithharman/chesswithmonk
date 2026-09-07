@@ -26,6 +26,13 @@ const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
         setIsMenuOpen(false);
     };
 
+    const handlePuzzleClick = () => {
+        toast.info("Coming Soon", {
+            description: "Tactical Puzzles are under active development."
+        });
+        setIsMenuOpen(false);
+    };
+
     return (
         <header className="border-b border-border/80 bg-card/90 backdrop-blur-md sticky top-0 z-50 shadow-md">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -80,7 +87,7 @@ const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
                             <GraduationCap className="w-4 h-4" />
                             <span>Learn</span>
                         </Button>
-                        <Link to="/puzzles">
+                        <Link to="/puzzles" onClick={handlePuzzleClick}>
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -179,7 +186,7 @@ const Navigation = ({ darkMode, setDarkMode }: NavigationProps) => {
                             <GraduationCap className="w-5 h-5 text-primary" />
                             Learn
                         </Button>
-                        <Link to="/puzzles" onClick={() => setIsMenuOpen(false)}>
+                        <Link to="/puzzles" onClick={handlePuzzleClick}>
                             <Button variant={isActive('/puzzles') ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-11 text-base font-medium">
                                 <Puzzle className="w-5 h-5 text-primary" />
                                 Puzzles
