@@ -1,9 +1,8 @@
-// Stockfish engine worker - Completely rewritten for reliable move suggestions
-// Uses Stockfish 17.1 WASM engine
+// Stockfish engine worker - High performance WASM engine integration
+// Optimized for fast responsive play without blocking delays
 
 let stockfish: Worker | null = null;
 let isReady = false;
-let currentAnalysis: { resolve: (value: any) => void; reject: (error: any) => void; timeout: NodeJS.Timeout } | null = null;
 
 type Difficulty = 'beginner' | 'novice' | 'intermediate' | 'advanced';
 
@@ -13,20 +12,35 @@ interface StockfishConfig {
     moveTime: number;
 }
 
+interface SuggestionItem {
+    pvNum: number;
+    move: {
+        from: string;
+        to: string;
+        promotion?: string;
+    };
+    score: number;
+    cpLoss: number;
+    classification: string;
+    depth: number;
+    uciMove: string;
+    mate: number | null;
+}
+
 function getDifficultyConfig(difficulty: Difficulty): StockfishConfig {
     switch (difficulty) {
         case 'beginner':
-            return { depth: 5, skillLevel: 5, moveTime: 1000 };
+            return { depth: 6, skillLevel: 4, moveTime: 150 };
         case 'novice':
-            return { depth: 10, skillLevel: 10, moveTime: 2000 };
+            return { depth: 9, skillLevel: 9, moveTime: 250 };
         case 'intermediate':
-            return { depth: 15, skillLevel: 15, moveTime: 5000 };
+            return { depth: 12, skillLevel: 14, moveTime: 350 };
         case 'advanced':
-            return { depth: 20, skillLevel: 20, moveTime: 10000 };
+            return { depth: 16, skillLevel: 20, moveTime: 500 };
     }
 }
 
-// Initialize Stockfish
+// Initialize Stockfish worker instance
 function initStockfish() {
     if (stockfish) return;
 
@@ -36,8 +50,6 @@ function initStockfish() {
 
         stockfish.onmessage = (event) => {
             const message = event.data;
-            console.log('[Stockfish]', message);
-
             if (message === 'readyok') {
                 isReady = true;
                 console.log('[Stockfish Worker] ✅ Engine ready!');
@@ -60,7 +72,7 @@ function initStockfish() {
     }
 }
 
-// Get best move
+// Get best move with strict time capping for instant responsiveness
 async function getBestMove(fen: string, difficulty: Difficulty): Promise<{ from: string; to: string; promotion?: string }> {
     initStockfish();
 
@@ -69,20 +81,19 @@ async function getBestMove(fen: string, difficulty: Difficulty): Promise<{ from:
     }
 
     const config = getDifficultyConfig(difficulty);
-    console.log('[Stockfish Worker] Getting best move with config:', config);
 
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
             console.error('[Stockfish Worker] ❌ Timeout waiting for best move');
             reject(new Error('Timeout'));
-        }, config.moveTime + 5000);
+        }, config.moveTime + 1500);
 
         let bestMove = '';
 
         const messageHandler = (event: MessageEvent) => {
             const message = event.data;
 
-            if (message.startsWith('bestmove')) {
+            if (typeof message === 'string' && message.startsWith('bestmove')) {
                 const parts = message.split(' ');
                 bestMove = parts[1];
 
@@ -100,12 +111,11 @@ async function getBestMove(fen: string, difficulty: Difficulty): Promise<{ from:
                     promotion: bestMove.length > 4 ? bestMove[4] : undefined,
                 };
 
-                console.log('[Stockfish Worker] ✅ Best move:', bestMove, '→', move);
                 resolve(move);
             }
         };
 
-        // Wait for engine to be ready
+        // Wait for engine readiness and dispatch UCI search
         const checkReady = setInterval(() => {
             if (isReady && stockfish) {
                 clearInterval(checkReady);
@@ -113,16 +123,23 @@ async function getBestMove(fen: string, difficulty: Difficulty): Promise<{ from:
                 stockfish.addEventListener('message', messageHandler);
                 stockfish.postMessage(`setoption name Skill Level value ${config.skillLevel}`);
                 stockfish.postMessage(`position fen ${fen}`);
-                stockfish.postMessage(`go depth ${config.depth}`);
+                stockfish.postMessage(`go depth ${config.depth} movetime ${config.moveTime}`);
             }
-        }, 50);
+        }, 20);
 
-        setTimeout(() => clearInterval(checkReady), config.moveTime + 5000);
+        setTimeout(() => clearInterval(checkReady), config.moveTime + 1500);
     });
 }
 
 // Get top N move suggestions
-async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: number = 3, depth?: number, threads: number = 1, hash: number = 64): Promise<any[]> {
+async function getSuggestions(
+    fen: string,
+    difficulty: Difficulty,
+    multiPV: number = 3,
+    depth?: number,
+    threads: number = 1,
+    hash: number = 64
+): Promise<SuggestionItem[]> {
     initStockfish();
 
     if (!stockfish) {
@@ -132,23 +149,21 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
 
     const config = getDifficultyConfig(difficulty);
     const suggestionDepth = depth || (difficulty === 'beginner' ? 5 :
-        difficulty === 'novice' ? 10 :
-            difficulty === 'intermediate' ? 15 : 18);
-
-    console.log('[Stockfish Worker] Getting suggestions - depth:', suggestionDepth, 'difficulty:', difficulty, 'threads:', threads, 'hash:', hash);
+        difficulty === 'novice' ? 8 :
+            difficulty === 'intermediate' ? 12 : 15);
 
     return new Promise((resolve) => {
-        const suggestions: any[] = [];
+        const suggestions: SuggestionItem[] = [];
         let currentDepth = 0;
         let mateDetected: number | null = null;
 
         const timeout = setTimeout(() => {
-            console.log('[Stockfish Worker] ⏱️ Timeout, returning', suggestions.length, 'suggestions');
             resolve(suggestions.slice(0, multiPV));
-        }, config.moveTime);
+        }, config.moveTime + 500);
 
         const messageHandler = (event: MessageEvent) => {
             const message = event.data;
+            if (typeof message !== 'string') return;
 
             // Parse depth
             const depthMatch = message.match(/depth\s+(\d+)/);
@@ -156,13 +171,13 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
                 currentDepth = parseInt(depthMatch[1]);
             }
 
-            // Parse mate score - format: "score mate 5" or "score mate -3"
+            // Parse mate score
             const mateMatch = message.match(/score mate\s+(-?\d+)/);
             if (mateMatch) {
                 mateDetected = parseInt(mateMatch[1]);
             }
 
-            // Parse MultiPV lines - format: "info depth 10 multipv 1 score cp 25 pv e2e4 e7e5"
+            // Parse MultiPV lines
             if (message.includes('multipv') && message.includes('pv')) {
                 const pvMatch = message.match(/multipv\s+(\d+)/);
                 const scoreMatch = message.match(/score cp\s+(-?\d+)/);
@@ -172,13 +187,11 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
                     const pvNum = parseInt(pvMatch[1]);
                     const score = scoreMatch ? parseInt(scoreMatch[1]) : (mateDetected! > 0 ? 100000 : -100000);
                     const moves = pvMovesMatch[1].split(' ');
-                    const firstMove = moves[0]; // Get the first move in UCI format (e.g., "e2e4")
-
-                    console.log('[Stockfish Worker] 📊 Parsed line PV', pvNum, ':', firstMove, 'score:', score, 'depth:', currentDepth);
+                    const firstMove = moves[0];
 
                     if (firstMove && firstMove.length >= 4) {
                         const existingIndex = suggestions.findIndex(s => s.pvNum === pvNum);
-                        const suggestion = {
+                        const suggestion: SuggestionItem = {
                             pvNum,
                             move: {
                                 from: firstMove.substring(0, 2),
@@ -194,7 +207,6 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
                         };
 
                         if (existingIndex >= 0) {
-                            // Only update if depth is higher
                             if (currentDepth >= suggestions[existingIndex].depth) {
                                 suggestions[existingIndex] = suggestion;
                             }
@@ -210,7 +222,6 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
                 clearTimeout(timeout);
                 stockfish!.removeEventListener('message', messageHandler);
 
-                // Calculate cpLoss and classifications
                 if (suggestions.length > 0) {
                     suggestions.sort((a, b) => b.score - a.score);
                     const bestScore = suggestions[0].score;
@@ -224,12 +235,10 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
                     });
                 }
 
-                console.log('[Stockfish Worker] ✅ Analysis complete. Suggestions:', suggestions.length);
                 resolve(suggestions.slice(0, multiPV));
             }
         };
 
-        // Wait for engine to be ready
         const checkReady = setInterval(() => {
             if (isReady && stockfish) {
                 clearInterval(checkReady);
@@ -239,29 +248,26 @@ async function getSuggestions(fen: string, difficulty: Difficulty, multiPV: numb
                 stockfish.postMessage(`setoption name Hash value ${hash}`);
                 stockfish.postMessage(`setoption name MultiPV value ${multiPV}`);
                 stockfish.postMessage(`position fen ${fen}`);
-                stockfish.postMessage(`go depth ${suggestionDepth}`);
+                stockfish.postMessage(`go depth ${suggestionDepth} movetime ${config.moveTime}`);
             }
-        }, 50);
+        }, 20);
 
-        setTimeout(() => clearInterval(checkReady), config.moveTime);
+        setTimeout(() => clearInterval(checkReady), config.moveTime + 500);
     });
 }
 
 // Worker message handler
 self.onmessage = async (e: MessageEvent) => {
     const { id, action, fen, difficulty } = e.data;
-    console.log('[Stockfish Worker] 📥 Received:', action, 'difficulty:', difficulty);
 
     try {
         if (action === 'pick') {
             const move = await getBestMove(fen, difficulty || 'novice');
-            console.log('[Stockfish Worker] 📤 Sending best move:', move);
             self.postMessage({ id, move });
         }
         else if (action === 'suggestions' || action === 'suggest') {
             const { multiPV = 3, depth, threads = 1, hash = 64 } = e.data;
             const suggestions = await getSuggestions(fen, difficulty || 'novice', multiPV, depth, threads, hash);
-            console.log('[Stockfish Worker] 📤 Sending', suggestions.length, 'suggestions');
             self.postMessage({ id, suggestions });
         }
         else if (action === 'analyze') {
